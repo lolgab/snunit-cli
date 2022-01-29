@@ -7,10 +7,10 @@ SNUnit CLI is a CLI for SNUnit.
 To build you need to install [scala-cli](https://scala-cli.virtuslab.org/).
 
 ```bash
-scala-cli package snunit-cli -o snunit-cli
+scala-cli package snunit-cli -o snunit
 ```
 
-This generates a binary called `snunit-cli`
+This generates a binary called `snunit`
 
 ## First example
 
@@ -26,11 +26,11 @@ def handler(name: String): String = s"Hello $name!"
 After that you can run your function with:
 
 ```bash
-./scala-cli --path example --port 8081
+./snunit --path example --port 8081
 ```
 
 ```
-> ./scala-cli --path example --port 8081
+> ./snunit --path example --port 8081
 
 Compiling project (Scala 3.1.1, Scala Native)
 Compiled project (Scala 3.1.1, Scala Native)
