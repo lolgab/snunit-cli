@@ -1,4 +1,5 @@
 .bsp
 .snunit
+.snunit-test
 .metals
 .scala-build

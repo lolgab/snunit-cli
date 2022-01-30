@@ -12,7 +12,7 @@ class SimpleTest extends FunSuite {
     val toSend = "Simple test"
     os.write(workdir / "handler.scala", s"def handler = \"$toSend\"")
     val port = 9000
-    Main.run(workdir)
+    Main.runBackground(workdir)
     assertEquals(requests.get("http://localhost:9000").text, toSend)
   }
 }

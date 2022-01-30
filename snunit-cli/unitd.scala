@@ -15,7 +15,7 @@ object unitd {
       case NonFatal(e) =>
     }
   }
-  def runBackground(config: ujson.Obj): Unit = {
+  private def createProc(config: ujson.Obj): os.proc = {
     closeUnitd()
     val state = dest / "state"
     os.makeDir.all(state)
@@ -23,28 +23,36 @@ object unitd {
     val control = dest / "control.sock"
     os.remove(control)
     val started = new AtomicBoolean(false)
-    val proc = os.proc(
-        "unitd",
-        "--no-daemon",
-        "--log",
-        "/dev/stdout",
-        "--state",
-        state,
-        "--control",
-        s"unix:$control",
-        "--pid",
-        pidFile
-      ).spawn(stderr = os.ProcessOutput.Readlines(line => {
-        line match {
-          case s"$_ unit $_ started" =>
-            started.set(true)
-          case _ =>
-        }
-        System.err.println(line)
-      }))
+    os.proc(
+      "unitd",
+      "--no-daemon",
+      "--log",
+      "/dev/stdout",
+      "--state",
+      state,
+      "--control",
+      s"unix:$control",
+      "--pid",
+      pidFile
+    )
+  }
+  def runBackground(config: ujson.Obj): Long = {
+    val started = new AtomicBoolean(false)
+    val proc = createProc(config).spawn(stderr = os.ProcessOutput.Readlines(line => {
+      line match {
+        case s"$_ unit $_ started" =>
+          started.set(true)
+        case _ =>
+      }
+      System.err.println(line)
+    }))
     while (!started.get()) {
       println("Waiting for unit to start...")
       Thread.sleep(100)
     }
+    proc.wrapped.pid()
+  }
+  def run(config: ujson.Obj): Unit = {
+    createProc(config).call()
   }
 }

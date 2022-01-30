@@ -4,10 +4,11 @@ import $dep.`com.lihaoyi::mainargs:0.2.2`
 import mainargs._
 
 object Main {
-  private implicit object PathRead extends TokensReader[os.Path](
-    "path",
-    strs => Right(os.Path(strs.head, os.pwd))
-  )
+  private implicit object PathRead
+      extends TokensReader[os.Path](
+        "path",
+        strs => Right(os.Path(strs.head, os.pwd))
+      )
 
   val main = """//> using scala "3.1.1"
     |//> using platform "scala-native"
@@ -51,29 +52,60 @@ object Main {
         s"*:$port" -> ujson.Obj("pass" -> "applications/app")
       ),
       "applications" -> ujson.Obj(
-        "app" -> ujson.Obj("type" -> "external", "executable" -> executable.toString)
+        "app" -> ujson.Obj(
+          "type" -> "external",
+          "executable" -> executable.toString
+        )
       )
     )
   }
 
-  @main
-  def run(@arg(doc = "The path where the handler is") path: os.Path, @arg(doc = "Port where the server accepts request") port: Int = 9000): Unit = {
+  private val cacheDir = os.pwd / ".snunit"
+
+  private def buildBinary(path: os.Path, scalaCliArgs: Seq[os.Shellable]) = {
     def fail() = sys.exit(1)
-    if(!os.exists(path)) {
+    if (!os.exists(path)) {
       println(s"The path $path doesn't exist. Exiting.")
       fail()
     }
-    val cacheDir = os.pwd / ".snunit"
     val targetDir = cacheDir / path.last
-    os.remove.all(cacheDir)
     os.makeDir.all(cacheDir)
-    os.copy.into(path, cacheDir)
+    os.copy.over(path, targetDir)
     os.write.over(targetDir / "snunit-main.scala", main)
     val outputPath = cacheDir / s"${path.last}.out"
-    os.proc("scala-cli", "package", targetDir, "-o", outputPath).call(stdout = os.Inherit)
-    val config = makeConfig(outputPath, port)
-    unitd.runBackground(config)
+    os.remove(outputPath)
+    os.remove.all(targetDir / ".scala-build" / "project" / "native")
+    val proc = os.proc("scala-cli", "package", targetDir, "-o", outputPath, scalaCliArgs)
+    proc.call(
+      stdout = os.Inherit,
+      stderr = os.ProcessOutput
+        .Readlines(line => if (!line.contains("run it with")) println(line))
+    )
+    outputPath
   }
 
-  def main(args: Array[String]): Unit = mainargs.ParserForMethods(this).runOrExit(args)
+  @main
+  def run(
+      @arg(doc = "The path where the handler is") path: os.Path,
+      @arg(doc = "Port where the server accepts request") port: Int = 9000
+  ): Unit = {
+    val outputPath = buildBinary(path, scalaCliArgs = Seq())
+    val config = makeConfig(outputPath, port)
+    val pid = unitd.run(config)
+    println(s"Unit is running in the background with pid $pid")
+  }
+
+  @main
+  def runBackground(
+      @arg(doc = "The path where the handler is") path: os.Path,
+      @arg(doc = "Port where the server accepts request") port: Int = 9000
+  ): Unit = {
+    val outputPath = buildBinary(path, scalaCliArgs = Seq())
+    val config = makeConfig(outputPath, port)
+    val pid = unitd.runBackground(config)
+    println(s"Unit is running in the background with pid $pid")
+  }
+
+  def main(args: Array[String]): Unit =
+    mainargs.ParserForMethods(this).runOrExit(args)
 }
