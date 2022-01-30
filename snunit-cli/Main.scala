@@ -10,35 +10,8 @@ object Main {
         strs => Right(os.Path(strs.head, os.pwd))
       )
 
-  val main = """//> using scala "3.1.1"
-    |//> using platform "scala-native"
-    |
-    |import $dep.`com.github.lolgab::snunit::0.0.13`
-    |import $dep.`com.lihaoyi::upickle::1.5.0`
-    |
+  val main = """
     |import snunit._
-    |import snunit.ServerBuilder
-    |
-    |import scala.compiletime.error
-    |import scala.util.control.NonFatal
-    |
-    |private inline def handlerImpl(req: Request, res: String, contentType: String): Unit =
-    |  try {
-    |    req.send(StatusCode.OK, res, Seq("Content-type" -> "text/plain"))
-    |  } catch {
-    |    case NonFatal(e) =>
-    |      req.send(StatusCode.InternalServerError, s"Got error $e", Seq.empty)
-    |  }
-    |
-    |private transparent inline def wrapHandler(handler: Any): Handler = inline handler match {
-    |  case s: String => req => handlerImpl(req, s, "text/plain")
-    |  case f: (String => String) => req => handlerImpl(req, f(req.content), "text/plain")
-    |  case f: (String => Either[Throwable, String]) => req => f(req.content) match {
-    |    case Right(value) => req.send(StatusCode.OK, value, Seq("Content-type" -> "text/plain"))
-    |    case Left(e) => req.send(StatusCode.InternalServerError, s"Got error $e", Seq("Content-type" -> "text/plain"))
-    |  }
-    |  case other => error("handler type not supported")
-    |}
     |
     |@main
     |def main =
@@ -71,6 +44,9 @@ object Main {
     val targetDir = cacheDir / path.last
     os.makeDir.all(cacheDir)
     os.copy.over(path, targetDir)
+    os.list(os.pwd / "snunit-cli-runtime").filter(_.ext == "scala").foreach { file =>
+      os.copy.into(file, targetDir)
+    }
     os.write.over(targetDir / "snunit-main.scala", main)
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
