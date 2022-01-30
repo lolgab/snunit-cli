@@ -50,6 +50,27 @@ Waiting for unit to start...
 
 Then you can check the server is running with curl:
 ```bash
-> curl -X POST -d 'Lorenzo' http://localhost:8081
+curl -X POST -d 'Lorenzo' http://localhost:8081
 Hello Lorenzo!!!⏎ 
+```
+
+## Creating a Docker image
+
+You can create a docker image of your app with:
+
+```bash
+./snunit buildDocker --path example --port 8081 --dockerImage my_great_app
+```
+
+Then you can run your image with:
+
+```bash
+docker run --rm -p 8081:8081 my_great_app
+```
+
+And check everything is working:
+
+```bash
+curl -X POST -d 'John Doe' http://localhost:8081
+Hello John Doe!!!⏎ 
 ```

@@ -1,0 +1,1 @@
+def handler = "Hello world!"
