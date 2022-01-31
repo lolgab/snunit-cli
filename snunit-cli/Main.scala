@@ -41,9 +41,14 @@ object Main {
       println(s"The path $path doesn't exist. Exiting.")
       fail()
     }
-    val targetDir = cacheDir / path.last
     os.makeDir.all(cacheDir)
-    os.copy.over(path, targetDir)
+    val targetDir = cacheDir / path.last.stripSuffix(".scala")
+    if(os.isFile(path)) {
+      os.makeDir.all(targetDir)
+      os.copy.into(path, targetDir, replaceExisting = true)
+    } else {
+      os.copy.over(path, targetDir)
+    }
     val runtime = os.read(os.resource / "runtime.scala")
     os.write.over(targetDir / "runtime.scala", runtime)
     os.write.over(targetDir / "snunit-main.scala", main)

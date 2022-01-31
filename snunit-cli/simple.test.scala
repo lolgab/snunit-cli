@@ -18,6 +18,16 @@ class SimpleTest extends FunSuite {
     runHandler(s"def handler = \"$toSend\"")
     assertEquals(requests.get(url).text, toSend)
   }
+  test("should support file paths") {
+    val toSend = "Simple test"
+    val workdir = os.pwd / ".snunit-test" / "test" / "example"
+    os.remove.all(workdir)
+    os.makeDir.all(workdir)
+    val file = workdir / "handler.scala"
+    os.write(file, s"def handler = \"$toSend\"")
+    Main.runBackground(file, port)
+    assertEquals(requests.get(url).text, toSend)
+  }
   test("Either handler") {
     runHandler(
       """def handler(body: String): Either[String, String] = body match {
