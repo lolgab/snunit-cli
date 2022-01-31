@@ -44,9 +44,8 @@ object Main {
     val targetDir = cacheDir / path.last
     os.makeDir.all(cacheDir)
     os.copy.over(path, targetDir)
-    os.list(os.pwd / "snunit-cli-runtime").filter(_.ext == "scala").foreach { file =>
-      os.copy.into(file, targetDir)
-    }
+    val runtime = os.read(os.resource / "runtime.scala")
+    os.write.over(targetDir / "runtime.scala", runtime)
     os.write.over(targetDir / "snunit-main.scala", main)
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
