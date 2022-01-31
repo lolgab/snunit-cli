@@ -6,6 +6,7 @@ import $dep.`com.github.lolgab::snunit::0.0.13`
 import snunit._
 import snunit.ServerBuilder
 
+import scala.compiletime.erasedValue
 import scala.util.control.NonFatal
 
 private inline def handlerImpl(req: Request, code: StatusCode, res: String, contentType: String): Unit =
@@ -28,10 +29,19 @@ private transparent inline def toWritable[T](req: Request, code: StatusCode, t: 
   }
 }
 
+private transparent inline def readContent[T](content: String) = {
+  val result = inline erasedValue[T] match {
+    case _: String => content
+    case _: Int => content.toInt
+  }
+  result.asInstanceOf[T]
+}
+
 private transparent inline def wrapHandler[T](handler: T): Handler = inline handler match {
-  case f: (String => u) =>
+  case f: (t => u) =>
     req =>
-      val resT = f(req.content)
+      val contentT = readContent[t](req.content)
+      val resT = f(contentT)
       toWritable(req, StatusCode.OK, resT)
   case s: T =>
     req => toWritable(req, StatusCode.OK, s)

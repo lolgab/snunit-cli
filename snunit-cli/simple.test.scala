@@ -31,6 +31,10 @@ class SimpleTest extends FunSuite {
     assertEquals(leftResponse.text, "Error")
     assertEquals(leftResponse.statusCode, 500)
   }
+  test("Handler with int parameter") {
+    runHandler("def handler(i: Int): Int = i + 1")
+    assertEquals(requests.post(url, data = "10").text, "11")
+  }
 
   test("should build a docker image") {
     val workdir = os.pwd / ".snunit-test" / "test" / "example"

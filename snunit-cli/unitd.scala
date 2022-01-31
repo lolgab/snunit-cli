@@ -53,6 +53,6 @@ object unitd {
     proc.wrapped.pid()
   }
   def run(config: ujson.Obj): Unit = {
-    createProc(config).call()
+    createProc(config).call(stdout = os.Inherit)
   }
 }
