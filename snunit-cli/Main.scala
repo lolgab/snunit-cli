@@ -94,7 +94,6 @@ object Main {
       @arg(doc = "Port where the server accepts request") port: Int = 9000
   ): Unit = {
     val clangImage = "lolgab/snunit-clang:0.0.2"
-    os.proc("docker", "pull", clangImage).call(stdout = os.Inherit)
     val container = os
       .proc(
         "docker",
