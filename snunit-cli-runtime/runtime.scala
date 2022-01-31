@@ -21,6 +21,7 @@ private inline def textPlainResponse(req: Request, code: StatusCode, res: String
 
 private transparent inline def toWritable[T](req: Request, code: StatusCode, t: T): Unit = inline t match {
   case s: String => textPlainResponse(req, code, s)
+  case i: Int => textPlainResponse(req, code, i.toString)
   case Right(r) => toWritable(req, StatusCode.OK, r)
   case Left(l) => toWritable(req, StatusCode.InternalServerError, l)
   case e: Either[l, r] => e match {

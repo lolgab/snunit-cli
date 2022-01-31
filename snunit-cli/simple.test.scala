@@ -47,8 +47,11 @@ class SimpleTest extends FunSuite {
     val imageName = "simple-test-image"
     Main.buildDocker(workdir, imageName, port)
     val container = os.proc("docker", "run", "-p", s"$port:$port", "-d", imageName).call().out.text.trim
-    assertEquals(requests.get(s"http://localhost:$port").text, toSend)
-    os.proc("docker", "kill", container).call()
+    try {
+      assertEquals(requests.get(s"http://localhost:$port").text, toSend)
+    } finally {
+      os.proc("docker", "kill", container).call(check = false)
+    }
   }
 
   override def afterAll(): Unit = {
