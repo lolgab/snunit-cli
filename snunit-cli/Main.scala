@@ -43,11 +43,17 @@ object Main {
     }
     os.makeDir.all(cacheDir)
     val targetDir = cacheDir / path.last.stripSuffix(".scala")
+    os.makeDir.all(targetDir)
     if(os.isFile(path)) {
-      os.makeDir.all(targetDir)
-      os.copy.into(path, targetDir, replaceExisting = true)
+      val dest = targetDir / path.last
+      os.remove(dest)
+      os.symlink(dest, path)
     } else {
-      os.copy.over(path, targetDir)
+      os.list(path).foreach { p =>
+        val dest = targetDir / p.relativeTo(path)
+        os.remove(dest)
+        os.symlink(dest, p)
+      }
     }
     val runtime = os.read(os.resource / "runtime.scala")
     os.write.over(targetDir / "runtime.scala", runtime)
@@ -88,6 +94,7 @@ object Main {
       @arg(doc = "Port where the server accepts request") port: Int = 9000
   ): Unit = {
     val targetDir = prepareSources(path)
+    os.remove(targetDir / "config.scala")
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
