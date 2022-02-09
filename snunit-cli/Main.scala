@@ -35,7 +35,7 @@ object Main {
 
   private val cacheDir = os.pwd / ".snunit"
 
-  private def buildBinary(path: os.Path, scalaCliArgs: Seq[os.Shellable]) = {
+  private def prepareSources(path: os.Path) = {
     def fail() = sys.exit(1)
     if (!os.exists(path)) {
       println(s"The path $path doesn't exist. Exiting.")
@@ -52,6 +52,12 @@ object Main {
     val runtime = os.read(os.resource / "runtime.scala")
     os.write.over(targetDir / "runtime.scala", runtime)
     os.write.over(targetDir / "snunit-main.scala", main)
+    targetDir
+  }
+
+  private def buildBinary(path: os.Path, scalaCliArgs: Seq[os.Shellable]) = {
+    val targetDir = prepareSources(path)
+    os.write.over(targetDir / "config.scala", "//> using platform \"scala-native\"")
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
@@ -74,6 +80,19 @@ object Main {
     val config = makeConfig(outputPath, port)
     val pid = unitd.run(config)
     println(s"Unit is running in the background with pid $pid")
+  }
+
+  @main
+  def runJvm(
+      @arg(doc = "The path where the handler is") path: os.Path,
+      @arg(doc = "Port where the server accepts request") port: Int = 9000
+  ): Unit = {
+    val targetDir = prepareSources(path)
+    val outputPath = cacheDir / s"${path.last}.out"
+    os.remove(outputPath)
+    os.remove.all(targetDir / ".scala-build" / "project" / "native")
+    val proc = os.proc("scala-cli", "run", targetDir)
+    proc.call(stdout = os.Inherit)
   }
 
   @main

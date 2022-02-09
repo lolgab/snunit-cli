@@ -1,10 +1,8 @@
 //> using scala "3.1.1"
-//> using platform "scala-native"
 
-import $dep.`com.github.lolgab::snunit::0.0.13`
+import $dep.`com.github.lolgab::snunit::0.0.14`
 
 import snunit._
-import snunit.ServerBuilder
 
 import scala.compiletime.erasedValue
 import scala.util.control.NonFatal
