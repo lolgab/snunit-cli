@@ -54,6 +54,25 @@ curl -X POST -d 'Lorenzo' http://localhost:8081
 Hello Lorenzo!!!⏎ 
 ```
 
+## Running on JVM
+
+snunit-cli allows running on Jvm too to have a faster development cycle.
+The Jvm implementation is a thin layer on top of the [Undertow](https://undertow.io/) Java server.
+
+You can run on Jvm using the `runJvm` command:
+
+```bash
+$ snunit runJvm --path func.scala --port 9001
+feb 10, 2022 11:33:57 AM io.undertow.Undertow start
+INFO: starting server: Undertow - 2.2.14.Final
+feb 10, 2022 11:33:57 AM org.xnio.Xnio <clinit>
+INFO: XNIO version 3.8.4.Final
+feb 10, 2022 11:33:57 AM org.xnio.nio.NioXnio <clinit>
+INFO: XNIO NIO Implementation Version 3.8.4.Final
+feb 10, 2022 11:33:57 AM org.jboss.threads.Version <clinit>
+INFO: JBoss Threads version 3.1.0.Final
+```
+
 ## Creating a Docker image
 
 You can create a docker image of your app with:
