@@ -99,7 +99,7 @@ object Main {
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
     val proc = os.proc("scala-cli", "run", targetDir)
-    proc.call(stdout = os.Inherit)
+    proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> port.toString))
   }
 
   @main
