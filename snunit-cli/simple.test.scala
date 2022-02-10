@@ -37,7 +37,8 @@ class SimpleTest extends FunSuite {
         |""".stripMargin
     )
     assertEquals(requests.post(url, data = "{}").text, "OK")
-    val leftResponse = requests.post(url, data = "something else", check = false)
+    val leftResponse =
+      requests.post(url, data = "something else", check = false)
     assertEquals(leftResponse.text, "Error")
     assertEquals(leftResponse.statusCode, 500)
   }
@@ -56,7 +57,12 @@ class SimpleTest extends FunSuite {
     val port = 8080
     val imageName = "simple-test-image"
     Main.buildDocker(workdir, imageName, port)
-    val container = os.proc("docker", "run", "-p", s"$port:$port", "-d", imageName).call().out.text.trim
+    val container = os
+      .proc("docker", "run", "-p", s"$port:$port", "-d", imageName)
+      .call()
+      .out
+      .text
+      .trim
     try {
       assertEquals(requests.get(s"http://localhost:$port").text, toSend)
     } finally {

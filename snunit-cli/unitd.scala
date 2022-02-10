@@ -38,14 +38,15 @@ object unitd {
   }
   def runBackground(config: ujson.Obj): Long = {
     val started = new AtomicBoolean(false)
-    val proc = createProc(config).spawn(stderr = os.ProcessOutput.Readlines(line => {
-      line match {
-        case s"$_ unit $_ started" =>
-          started.set(true)
-        case _ =>
-      }
-      System.err.println(line)
-    }))
+    val proc =
+      createProc(config).spawn(stderr = os.ProcessOutput.Readlines(line => {
+        line match {
+          case s"$_ unit $_ started" =>
+            started.set(true)
+          case _ =>
+        }
+        System.err.println(line)
+      }))
     while (!started.get()) {
       println("Waiting for unit to start...")
       Thread.sleep(100)

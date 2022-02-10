@@ -44,7 +44,7 @@ object Main {
     os.makeDir.all(cacheDir)
     val targetDir = cacheDir / path.last.stripSuffix(".scala")
     os.makeDir.all(targetDir)
-    if(os.isFile(path)) {
+    if (os.isFile(path)) {
       val dest = targetDir / path.last
       os.remove(dest)
       os.symlink(dest, path)
@@ -63,7 +63,10 @@ object Main {
 
   private def buildBinary(path: os.Path, scalaCliArgs: Seq[os.Shellable]) = {
     val targetDir = prepareSources(path)
-    os.write.over(targetDir / "config.scala", "//> using platform \"scala-native\"")
+    os.write.over(
+      targetDir / "config.scala",
+      "//> using platform \"scala-native\""
+    )
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
@@ -116,7 +119,8 @@ object Main {
   @main
   def buildDocker(
       @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Full name of the docker image to build") dockerImage: String = "snunit",
+      @arg(doc = "Full name of the docker image to build") dockerImage: String =
+        "snunit",
       @arg(doc = "Port where the server accepts request") port: Int = 9000
   ): Unit = {
     val clangImage = "lolgab/snunit-clang:0.0.2"
