@@ -93,3 +93,29 @@ And check everything is working:
 curl -X POST -d 'John Doe' http://localhost:8081
 Hello John Doe!!!⏎ 
 ```
+
+## Writing your own HTTP Server with `--no-runtime`
+
+With the `--no-runtime` flag `snunit-cli` will disable its runtime. So you will need to
+create your SNUnit HTTP server manually.
+
+For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
+
+```scala
+import $dep.`com.github.lolgab::snunit-cask::0.0.17`
+
+object MinimalApplication extends cask.MainRoutes {
+  @cask.get("/")
+  def hello() = {
+    "Hello World!"
+  }
+
+  initialize()
+}
+```
+
+After that you can run your server with:
+
+```bash
+./snunit run --path example --port 8081 --no-runtime
+```

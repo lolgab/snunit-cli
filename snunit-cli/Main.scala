@@ -35,6 +35,8 @@ object Main {
 
   private val cacheDir = os.pwd / ".snunit"
 
+  private val scalaNativeVersionArgs = Seq("--native-version", "0.4.4")
+
   private def prepareSources(path: os.Path, noRuntime: Boolean) = {
     def fail() = sys.exit(1)
     if (!os.exists(path)) {
@@ -82,7 +84,7 @@ object Main {
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
     val proc =
-      os.proc("scala-cli", "package", targetDir, "-o", outputPath, scalaCliArgs)
+      os.proc("scala-cli", "package", scalaNativeVersionArgs, targetDir, "-o", outputPath, scalaCliArgs)
     proc.call(
       stdout = os.Inherit,
       stderr = os.ProcessOutput
@@ -118,7 +120,7 @@ object Main {
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
-    val proc = os.proc("scala-cli", "run", targetDir)
+    val proc = os.proc("scala-cli", "run", scalaNativeVersionArgs, targetDir)
     proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> port.toString))
   }
 
