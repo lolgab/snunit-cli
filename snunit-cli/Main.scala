@@ -35,7 +35,7 @@ object Main {
 
   private val cacheDir = os.pwd / ".snunit"
 
-  private def prepareSources(path: os.Path) = {
+  private def prepareSources(path: os.Path, noRuntime: Boolean) = {
     def fail() = sys.exit(1)
     if (!os.exists(path)) {
       println(s"The path $path doesn't exist. Exiting.")
@@ -55,14 +55,25 @@ object Main {
         os.symlink(dest, p)
       }
     }
-    val runtime = os.read(os.resource / "runtime.scala")
-    os.write.over(targetDir / "runtime.scala", runtime)
-    os.write.over(targetDir / "snunit-main.scala", main)
+    val runtimeDest = targetDir / "runtime.scala"
+    val mainDest = targetDir / "snunit-main.scala"
+    if (!noRuntime) {
+      val runtime = os.read(os.resource / "runtime.scala")
+      os.write.over(runtimeDest, runtime)
+      os.write.over(mainDest, main)
+    } else {
+      os.remove(runtimeDest)
+      os.remove(mainDest)
+    }
     targetDir
   }
 
-  private def buildBinary(path: os.Path, scalaCliArgs: Seq[os.Shellable]) = {
-    val targetDir = prepareSources(path)
+  private def buildBinary(
+      path: os.Path,
+      noRuntime: Boolean,
+      scalaCliArgs: Seq[os.Shellable]
+  ) = {
+    val targetDir = prepareSources(path, noRuntime)
     os.write.over(
       targetDir / "config.scala",
       "//> using platform \"scala-native\""
@@ -83,9 +94,12 @@ object Main {
   @main
   def run(
       @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Port where the server accepts request") port: Int = 9000
+      @arg(doc = "Port where the server accepts request") port: Int = 9000,
+      @arg(doc = "Run a snunit server without runtime") @arg(
+        doc = "Run a snunit server without runtime"
+      ) `no-runtime`: Flag
   ): Unit = {
-    val outputPath = buildBinary(path, scalaCliArgs = Seq())
+    val outputPath = buildBinary(path, `no-runtime`.value, scalaCliArgs = Seq())
     val config = makeConfig(outputPath, port)
     val pid = unitd.run(config)
     println(s"Unit is running in the background with pid $pid")
@@ -94,9 +108,12 @@ object Main {
   @main
   def runJvm(
       @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Port where the server accepts request") port: Int = 9000
+      @arg(doc = "Port where the server accepts request") port: Int = 9000,
+      @arg(doc = "Run a snunit server without runtime") @arg(
+        doc = "Run a snunit server without runtime"
+      ) `no-runtime`: Flag
   ): Unit = {
-    val targetDir = prepareSources(path)
+    val targetDir = prepareSources(path, `no-runtime`.value)
     os.remove(targetDir / "config.scala")
     val outputPath = cacheDir / s"${path.last}.out"
     os.remove(outputPath)
@@ -108,9 +125,12 @@ object Main {
   @main
   def runBackground(
       @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Port where the server accepts request") port: Int = 9000
+      @arg(doc = "Port where the server accepts request") port: Int = 9000,
+      @arg(doc = "Run a snunit server without runtime") @arg(
+        doc = "Run a snunit server without runtime"
+      ) `no-runtime`: Flag
   ): Unit = {
-    val outputPath = buildBinary(path, scalaCliArgs = Seq())
+    val outputPath = buildBinary(path, `no-runtime`.value, scalaCliArgs = Seq())
     val config = makeConfig(outputPath, port)
     val pid = unitd.runBackground(config)
     println(s"Unit is running in the background with pid $pid")
@@ -121,7 +141,10 @@ object Main {
       @arg(doc = "The path where the handler is") path: os.Path,
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
         "snunit",
-      @arg(doc = "Port where the server accepts request") port: Int = 9000
+      @arg(doc = "Port where the server accepts request") port: Int = 9000,
+      @arg(doc = "Run a snunit server without runtime") @arg(
+        doc = "Run a snunit server without runtime"
+      ) `no-runtime`: Flag
   ): Unit = {
     val clangImage = "lolgab/snunit-clang:0.0.2"
     val container = os
@@ -154,6 +177,7 @@ object Main {
 
       val outputPath = buildBinary(
         path,
+        `no-runtime`.value,
         Seq("--native-clang", clangPath, "--native-clangpp", clangppPath)
       )
       val workdirInContainer = os.root / "workdir"

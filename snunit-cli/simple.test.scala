@@ -6,16 +6,31 @@ import munit._
 class SimpleTest extends FunSuite {
   val port = 9000
   val url = s"http://localhost:$port"
-  def runHandler(handler: String) = {
+  def runHandler(handler: String, noRuntime: Boolean = false) = {
     val workdir = os.pwd / ".snunit-test" / "test" / "example"
     os.remove.all(workdir)
     os.makeDir.all(workdir)
     os.write(workdir / "handler.scala", handler)
-    Main.runBackground(workdir, port)
+    Main.runBackground(workdir, port, mainargs.Flag(noRuntime))
   }
   test("should run simple example") {
     val toSend = "Simple test"
     runHandler(s"def handler = \"$toSend\"")
+    assertEquals(requests.get(url).text, toSend)
+  }
+  test("should run with --no-runtime") {
+    val toSend = "Simple test"
+    val main = s"""
+      |//> using scala "3.1.1"
+      |import $$dep.`com.github.lolgab::snunit::0.0.15`
+      |import snunit._
+      |
+      |@main
+      |def main =
+      |  SyncServerBuilder.build(_.send(StatusCode.OK, "$toSend", Seq()))
+      |  .listen()
+      |""".stripMargin
+    runHandler(main, noRuntime = true)
     assertEquals(requests.get(url).text, toSend)
   }
   test("should support file paths") {
@@ -25,7 +40,7 @@ class SimpleTest extends FunSuite {
     os.makeDir.all(workdir)
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"$toSend\"")
-    Main.runBackground(file, port)
+    Main.runBackground(file, port, `no-runtime` = mainargs.Flag(false))
     assertEquals(requests.get(url).text, toSend)
   }
   test("Either handler") {
@@ -56,7 +71,7 @@ class SimpleTest extends FunSuite {
     os.write(workdir / "handler.scala", s"def handler = \"$toSend\"")
     val port = 8080
     val imageName = "simple-test-image"
-    Main.buildDocker(workdir, imageName, port)
+    Main.buildDocker(workdir, imageName, port, `no-runtime` = mainargs.Flag(false))
     val container = os
       .proc("docker", "run", "-p", s"$port:$port", "-d", imageName)
       .call()
