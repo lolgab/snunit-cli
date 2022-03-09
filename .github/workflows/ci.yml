@@ -22,22 +22,10 @@ jobs:
           sudo apt-get install -y libuv1-dev unit=$unit_version unit-dev=$unit_version
       - name: Test
         run: scala-cli test snunit-cli
-
-  publish-gh-releases:
-    # if: github.repository == 'lolgab/snunit-cli' && contains(github.ref, 'refs/tags/')
-    needs: build
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: coursier/cache-action@v6
-      - uses: coursier/setup-action@v1.2.0-M3
-        with:
-          jvm: temurin:1.17
-          apps: scala-cli
       - name: Create binary
         run: scala-cli package snunit-cli -o snunit
-      - uses: actions/upload-artifact@v3
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: snunit
-          path: .
-          if-no-files-found: error
+          files: snunit
