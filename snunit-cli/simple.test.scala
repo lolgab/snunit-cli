@@ -78,6 +78,8 @@ class SimpleTest extends FunSuite {
       .out
       .text
       .trim
+    // Wait for Docker to start
+    Thread.sleep(100)
     try {
       assertEquals(requests.get(s"http://localhost:$port").text, toSend)
     } finally {
