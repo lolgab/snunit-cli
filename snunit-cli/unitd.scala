@@ -22,7 +22,6 @@ object unitd {
     os.write.over(state / "conf.json", config)
     val control = dest / "control.sock"
     os.remove(control)
-    val started = new AtomicBoolean(false)
     os.proc(
       "unitd",
       "--no-daemon",
