@@ -2,20 +2,17 @@
 
 SNUnit CLI is a CLI for SNUnit.
 
-## Building
+## Install
 
-To build you need to install [scala-cli](https://scala-cli.virtuslab.org/).
+You need to install:
+- [scala-cli](https://scala-cli.virtuslab.org/).
+- [NGINX Unit](https://unit.nginx.org/installation)
 
-```bash
-scala-cli package snunit-cli -o snunit
-```
-
-This generates a binary called `snunit`
+Then you can download the `snunit` script from [Github Releases](https://github.com/lolgab/snunit-cli/releases)
 
 ## First example
 
-You need to install [NGINX Unit](https://unit.nginx.org/installation).
-Then you can create a directory with a scala file containing a function named `handler`
+You can create a directory with a scala file containing a function named `handler`
 
 For example: `example/main.scala`
 
@@ -119,3 +116,15 @@ After that you can run your server with:
 ```bash
 ./snunit run --path example --port 8081 --no-runtime
 ```
+
+## Contributing
+
+### Building
+
+To build you need to install [scala-cli](https://scala-cli.virtuslab.org/).
+
+```bash
+scala-cli package snunit-cli -o snunit
+```
+
+This generates a binary called `snunit`
