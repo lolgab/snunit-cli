@@ -84,7 +84,15 @@ object Main {
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
     val proc =
-      os.proc("scala-cli", "package", scalaNativeVersionArgs, targetDir, "-o", outputPath, scalaCliArgs)
+      os.proc(
+        "scala-cli",
+        "package",
+        scalaNativeVersionArgs,
+        targetDir,
+        "-o",
+        outputPath,
+        scalaCliArgs
+      )
     proc.call(
       stdout = os.Inherit,
       stderr = os.ProcessOutput
@@ -92,61 +100,46 @@ object Main {
     )
     outputPath
   }
-
   @main
-  def run(
+  case class Config(
       @arg(doc = "The path where the handler is") path: os.Path,
       @arg(doc = "Port where the server accepts request") port: Int = 9000,
-      @arg(doc = "Run a snunit server without runtime") @arg(
-        doc = "Run a snunit server without runtime"
-      ) `no-runtime`: Flag
-  ): Unit = {
-    val outputPath = buildBinary(path, `no-runtime`.value, scalaCliArgs = Seq())
-    val config = makeConfig(outputPath, port)
-    val pid = unitd.run(config)
+      @arg(doc = "Run a snunit server without runtime") `no-runtime`: Flag
+  )
+  implicit val configParser = ParserForClass[Config]
+
+  @main
+  def run(config: Config): Unit = {
+    val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
+    val unitConfig = makeConfig(outputPath, config.port)
+    val pid = unitd.run(unitConfig)
     println(s"Unit is running in the background with pid $pid")
   }
 
   @main
-  def runJvm(
-      @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Port where the server accepts request") port: Int = 9000,
-      @arg(doc = "Run a snunit server without runtime") @arg(
-        doc = "Run a snunit server without runtime"
-      ) `no-runtime`: Flag
-  ): Unit = {
-    val targetDir = prepareSources(path, `no-runtime`.value)
+  def runJvm(config: Config): Unit = {
+    val targetDir = prepareSources(config.path, config.`no-runtime`.value)
     os.remove(targetDir / "config.scala")
-    val outputPath = cacheDir / s"${path.last}.out"
+    val outputPath = cacheDir / s"${config.path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
     val proc = os.proc("scala-cli", "run", scalaNativeVersionArgs, targetDir)
-    proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> port.toString))
+    proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> config.port.toString))
   }
 
   @main
-  def runBackground(
-      @arg(doc = "The path where the handler is") path: os.Path,
-      @arg(doc = "Port where the server accepts request") port: Int = 9000,
-      @arg(doc = "Run a snunit server without runtime") @arg(
-        doc = "Run a snunit server without runtime"
-      ) `no-runtime`: Flag
-  ): Unit = {
-    val outputPath = buildBinary(path, `no-runtime`.value, scalaCliArgs = Seq())
-    val config = makeConfig(outputPath, port)
-    val pid = unitd.runBackground(config)
+  def runBackground(config: Config): Unit = {
+    val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
+    val unitConfig = makeConfig(outputPath, config.port)
+    val pid = unitd.runBackground(unitConfig)
     println(s"Unit is running in the background with pid $pid")
   }
 
   @main
   def buildDocker(
-      @arg(doc = "The path where the handler is") path: os.Path,
+      config: Config,
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
-        "snunit",
-      @arg(doc = "Port where the server accepts request") port: Int = 9000,
-      @arg(doc = "Run a snunit server without runtime") @arg(
-        doc = "Run a snunit server without runtime"
-      ) `no-runtime`: Flag
+        "snunit"
   ): Unit = {
     val clangImage = "lolgab/snunit-clang:0.0.2"
     val container = os
@@ -178,25 +171,25 @@ object Main {
       os.write(clangppPath, clangScript("clang++"), perms = "rwxr-xr-x")
 
       val outputPath = buildBinary(
-        path,
-        `no-runtime`.value,
+        config.path,
+        config.`no-runtime`.value,
         Seq("--native-clang", clangPath, "--native-clangpp", clangppPath)
       )
       val workdirInContainer = os.root / "workdir"
       val executablePathInContainer = workdirInContainer / outputPath.last
-      val config = makeConfig(executablePathInContainer, port)
+      val unitConfig = makeConfig(executablePathInContainer, config.port)
       val stateDir = cacheDir / "state"
       os.makeDir.all(stateDir)
       val configFile = stateDir / "conf.json"
       os.remove.all(configFile)
-      os.write(configFile, config)
+      os.write(configFile, unitConfig)
       val stateDirPathInContainer = workdirInContainer / "state"
 
       val dockerfile = s"""FROM nginx/unit:1.26.1-minimal
         |COPY ${outputPath.last} $executablePathInContainer
         |COPY ${stateDir.last} $stateDirPathInContainer
         |
-        |EXPOSE $port
+        |EXPOSE ${config.port}
         |
         |ENTRYPOINT ["unitd", "--no-daemon", "--log", "/dev/stdout", "--state", "$stateDirPathInContainer"]
         |""".stripMargin

@@ -11,7 +11,7 @@ class SimpleTest extends FunSuite {
     os.remove.all(workdir)
     os.makeDir.all(workdir)
     os.write(workdir / "handler.scala", handler)
-    Main.runBackground(workdir, port, mainargs.Flag(noRuntime))
+    Main.runBackground(Main.Config(workdir, port, mainargs.Flag(noRuntime)))
   }
   test("should run simple example") {
     val toSend = "Simple test"
@@ -40,7 +40,7 @@ class SimpleTest extends FunSuite {
     os.makeDir.all(workdir)
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"$toSend\"")
-    Main.runBackground(file, port, `no-runtime` = mainargs.Flag(false))
+    Main.runBackground(Main.Config(file, port, `no-runtime` = mainargs.Flag(false)))
     assertEquals(requests.get(url).text, toSend)
   }
   test("Either handler") {
@@ -71,7 +71,10 @@ class SimpleTest extends FunSuite {
     os.write(workdir / "handler.scala", s"def handler = \"$toSend\"")
     val port = 8080
     val imageName = "simple-test-image"
-    Main.buildDocker(workdir, imageName, port, `no-runtime` = mainargs.Flag(false))
+    Main.buildDocker(
+      Main.Config(workdir, port, `no-runtime` = mainargs.Flag(false)),
+      imageName
+    )
     val container = os
       .proc("docker", "run", "-p", s"$port:$port", "-d", imageName)
       .call()
