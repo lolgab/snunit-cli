@@ -1,6 +1,6 @@
 //> using scala "3.1.1"
 
-import $dep.`com.github.lolgab::snunit::0.0.15`
+import $dep.`com.github.lolgab::snunit::0.0.18`
 
 import snunit._
 
