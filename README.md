@@ -42,7 +42,7 @@ Compiled project (Scala 3.1.1, Scala Native)
   ./.snunit/example.out
 Waiting for unit to start...
 2022/01/29 19:37:49 [warn] 55045#10895105 Unit is running unprivileged, then it cannot use arbitrary user and group.
-2022/01/29 19:37:49 [info] 55045#10895105 unit 1.26.1 started
+2022/01/29 19:37:49 [info] 55045#10895105 unit 1.28.0 started
 ```
 
 Then you can check the server is running with curl:
@@ -99,7 +99,7 @@ create your SNUnit HTTP server manually.
 For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
 
 ```scala
-import $dep.`com.github.lolgab::snunit-cask::0.0.17`
+import $dep.`com.github.lolgab::snunit-cask::0.1.1`
 
 object MinimalApplication extends cask.MainRoutes {
   @cask.get("/")

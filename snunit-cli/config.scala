@@ -1,2 +1,2 @@
-//> using scala "2.13.8"
+//> using scala "3"
 //> using resourceDir "../snunit-cli-runtime"

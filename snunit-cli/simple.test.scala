@@ -16,13 +16,13 @@ class SimpleTest extends FunSuite {
   test("should run simple example") {
     val toSend = "Simple test"
     runHandler(s"def handler = \"$toSend\"")
-    assertEquals(requests.get(url).text, toSend)
+    assertEquals(requests.get(url).text(), toSend)
   }
   test("should run with --no-runtime") {
     val toSend = "Simple test"
     val main = s"""
-      |//> using scala "3.1.1"
-      |import $$dep.`com.github.lolgab::snunit::0.0.18`
+      |//> using scala "3.2.0"
+      |import $$dep.`com.github.lolgab::snunit::0.1.1`
       |import snunit._
       |
       |@main
@@ -31,7 +31,7 @@ class SimpleTest extends FunSuite {
       |  .listen()
       |""".stripMargin
     runHandler(main, noRuntime = true)
-    assertEquals(requests.get(url).text, toSend)
+    assertEquals(requests.get(url).text(), toSend)
   }
   test("should support file paths") {
     val toSend = "Simple test"
@@ -41,7 +41,7 @@ class SimpleTest extends FunSuite {
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"$toSend\"")
     Main.runBackground(Main.Config(file, port, `no-runtime` = mainargs.Flag(false)))
-    assertEquals(requests.get(url).text, toSend)
+    assertEquals(requests.get(url).text(), toSend)
   }
   test("Either handler") {
     runHandler(
@@ -51,15 +51,15 @@ class SimpleTest extends FunSuite {
         |}
         |""".stripMargin
     )
-    assertEquals(requests.post(url, data = "{}").text, "OK")
+    assertEquals(requests.post(url, data = "{}").text(), "OK")
     val leftResponse =
       requests.post(url, data = "something else", check = false)
-    assertEquals(leftResponse.text, "Error")
+    assertEquals(leftResponse.text(), "Error")
     assertEquals(leftResponse.statusCode, 500)
   }
   test("Handler with int parameter") {
     runHandler("def handler(i: Int): Int = i + 1")
-    assertEquals(requests.post(url, data = "10").text, "11")
+    assertEquals(requests.post(url, data = "10").text(), "11")
   }
 
   test("should build a docker image") {
@@ -79,12 +79,12 @@ class SimpleTest extends FunSuite {
       .proc("docker", "run", "-p", s"$port:$port", "-d", imageName)
       .call()
       .out
-      .text
+      .text()
       .trim
     // Wait for Docker to start
     Thread.sleep(100)
     try {
-      assertEquals(requests.get(s"http://localhost:$port").text, toSend)
+      assertEquals(requests.get(s"http://localhost:$port").text(), toSend)
     } finally {
       os.proc("docker", "kill", container).call(check = false)
     }

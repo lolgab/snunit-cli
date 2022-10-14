@@ -1,5 +1,5 @@
-import $dep.`com.lihaoyi::os-lib:0.8.0`
-import $dep.`com.lihaoyi::mainargs:0.2.2`
+import $dep.`com.lihaoyi::os-lib:0.8.1`
+import $dep.`com.lihaoyi::mainargs:0.3.0`
 
 import mainargs._
 
@@ -35,7 +35,7 @@ object Main {
 
   private val cacheDir = os.pwd / ".snunit"
 
-  private val scalaNativeVersionArgs = Seq("--native-version", "0.4.4")
+  private val scalaNativeVersionArgs = Seq("--native-version", "0.4.7")
 
   private def prepareSources(path: os.Path, noRuntime: Boolean) = {
     def fail() = sys.exit(1)
@@ -106,7 +106,7 @@ object Main {
       @arg(doc = "Port where the server accepts request") port: Int = 9000,
       @arg(doc = "Run a snunit server without runtime") `no-runtime`: Flag
   )
-  implicit val configParser = ParserForClass[Config]
+  implicit val configParser: ParserForClass[Config] = ParserForClass[Config]
 
   @main
   def run(config: Config): Unit = {
@@ -141,7 +141,7 @@ object Main {
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
         "snunit"
   ): Unit = {
-    val clangImage = "lolgab/snunit-clang:0.0.2"
+    val clangImage = "lolgab/snunit-clang:0.0.3"
     val container = os
       .proc(
         "docker",
@@ -155,7 +155,7 @@ object Main {
       )
       .call()
       .out
-      .text
+      .text()
       .trim
     try {
       def clangScript(entrypoint: String) = s"""#!/bin/bash
@@ -185,7 +185,7 @@ object Main {
       os.write(configFile, unitConfig)
       val stateDirPathInContainer = workdirInContainer / "state"
 
-      val dockerfile = s"""FROM nginx/unit:1.26.1-minimal
+      val dockerfile = s"""FROM nginx/unit:1.28.0-minimal
         |COPY ${outputPath.last} $executablePathInContainer
         |COPY ${stateDir.last} $stateDirPathInContainer
         |
