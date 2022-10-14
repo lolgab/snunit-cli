@@ -28,7 +28,7 @@ object Main {
       "routes" -> ujson.Arr(
         ujson.Obj("action" -> (publicDirOpt match {
           case Some(publicDir) =>
-            ujson.Obj("share" -> publicDir, "fallback" -> passToApp)
+            ujson.Obj("share" -> s"$publicDir$$uri", "fallback" -> passToApp)
           case None =>
             passToApp
         }))
@@ -121,8 +121,7 @@ object Main {
   def run(config: Config): Unit = {
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
     val unitConfig = makeConfig(outputPath, config.static, config.port)
-    val pid = unitd.run(unitConfig)
-    println(s"Unit is running in the background with pid $pid")
+    unitd.run(unitConfig)
   }
 
   @main
