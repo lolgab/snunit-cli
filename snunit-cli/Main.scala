@@ -4,11 +4,6 @@
 import mainargs._
 
 object Main {
-  def readRuntimeMacro()(using scala.quoted.Quotes): Expr[String] =
-    import quotes.reflect._
-    val runtime = os.read(os.Path(SourceFile.current.path) / os.up / os.up / "snunit-cli-runtime" / "runtime.scala")
-    Expr(runtime)
-
   inline def runtime: String = ${ readRuntimeMacro() }
   private implicit object PathRead
       extends TokensReader[os.Path](
@@ -16,8 +11,7 @@ object Main {
         strs => Right(os.Path(strs.head, os.pwd))
       )
 
-  val main = """
-    |import snunit._
+  val main = """import snunit._
     |
     |@main
     |def main =
@@ -25,10 +19,19 @@ object Main {
     |  .listen()
     |""".stripMargin
 
-  def makeConfig(executable: os.Path, port: Int) = {
+  def makeConfig(executable: os.Path, publicDirOpt: Option[os.Path], port: Int) = {
+    def passToApp = ujson.Obj("pass" -> "applications/app")
     ujson.Obj(
       "listeners" -> ujson.Obj(
-        s"*:$port" -> ujson.Obj("pass" -> "applications/app")
+        s"*:$port" -> ujson.Obj("pass" -> "routes")
+      ),
+      "routes" -> ujson.Arr(
+        ujson.Obj("action" -> (publicDirOpt match {
+          case Some(publicDir) =>
+            ujson.Obj("share" -> publicDir, "fallback" -> passToApp)
+          case None =>
+            passToApp
+        }))
       ),
       "applications" -> ujson.Obj(
         "app" -> ujson.Obj(
@@ -108,6 +111,7 @@ object Main {
   @main
   case class Config(
       @arg(doc = "The path where the handler is") path: os.Path,
+      @arg(doc = "Path with static files to serve") static: Option[os.Path],
       @arg(doc = "Port where the server accepts request") port: Int = 9000,
       @arg(doc = "Run a snunit server without runtime") `no-runtime`: Flag
   )
@@ -116,7 +120,7 @@ object Main {
   @main
   def run(config: Config): Unit = {
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
-    val unitConfig = makeConfig(outputPath, config.port)
+    val unitConfig = makeConfig(outputPath, config.static, config.port)
     val pid = unitd.run(unitConfig)
     println(s"Unit is running in the background with pid $pid")
   }
@@ -135,7 +139,7 @@ object Main {
   @main
   def runBackground(config: Config): Unit = {
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
-    val unitConfig = makeConfig(outputPath, config.port)
+    val unitConfig = makeConfig(outputPath, config.static, config.port)
     val pid = unitd.runBackground(unitConfig)
     println(s"Unit is running in the background with pid $pid")
   }
@@ -168,6 +172,7 @@ object Main {
         |""".stripMargin
 
       val clangPath = cacheDir / "clang.sh"
+      os.remove.all(cacheDir)
       os.makeDir.all(cacheDir)
       os.remove.all(clangPath)
       os.write(clangPath, clangScript("clang"), perms = "rwxr-xr-x")
@@ -181,10 +186,20 @@ object Main {
         Seq("--native-clang", clangPath, "--native-clangpp", clangppPath)
       )
       val workdirInContainer = os.root / "workdir"
+      val staticDirInContainer = workdirInContainer / "static"
       val executablePathInContainer = workdirInContainer / outputPath.last
-      val unitConfig = makeConfig(executablePathInContainer, config.port)
+      val unitConfig = makeConfig(executablePathInContainer, config.static.map(_ => staticDirInContainer), config.port)
       val stateDir = cacheDir / "state"
       os.makeDir.all(stateDir)
+      val staticInCacheDir = config.static.map { static =>
+        val targetStatic = cacheDir / "static"
+        os.makeDir.all(targetStatic)
+        os.list(static).foreach(f =>
+          pprint.pprintln(f)
+          os.copy.into(f, targetStatic)
+        )
+        targetStatic
+      }
       val configFile = stateDir / "conf.json"
       os.remove.all(configFile)
       os.write(configFile, unitConfig)
@@ -193,6 +208,7 @@ object Main {
       val dockerfile = s"""FROM nginx/unit:1.28.0-minimal
         |COPY ${outputPath.last} $executablePathInContainer
         |COPY ${stateDir.last} $stateDirPathInContainer
+        |${config.static.fold("")(static => s"COPY static $staticDirInContainer")}
         |
         |EXPOSE ${config.port}
         |
@@ -203,7 +219,12 @@ object Main {
       os.remove.all(dockerfilePath)
       os.write(dockerfilePath, dockerfile)
       os.proc("docker", "build", "-t", dockerImage, ".").call(cwd = cacheDir)
+      println(
+        s"""Your docker image was built. Run it with:
+           |docker run --rm -p ${config.port}:${config.port} $dockerImage""".stripMargin
+      )
     } finally {
+      println(s"killing container $container")
       os.proc("docker", "kill", container).call()
     }
   }
