@@ -1,7 +1,6 @@
-import $dep.`com.lihaoyi::upickle::1.5.0`
-import $dep.`com.lihaoyi::os-lib::0.8.0`
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.util.control.NonFatal
+
 object unitd {
   private val dest = os.home / ".cache" / "snunit"
   private val pidFile = dest / "unit.pid"

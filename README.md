@@ -99,7 +99,7 @@ create your SNUnit HTTP server manually.
 For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
 
 ```scala
-import $dep.`com.github.lolgab::snunit-cask::0.1.1`
+//> using lib "com.github.lolgab::snunit-cask::0.1.1"
 
 object MinimalApplication extends cask.MainRoutes {
   @cask.get("/")
@@ -121,10 +121,16 @@ After that you can run your server with:
 
 ### Building
 
-To build you need to install [scala-cli](https://scala-cli.virtuslab.org/).
+You can build a `jar` based executable with:
 
 ```bash
 scala-cli package snunit-cli -o snunit
 ```
 
-This generates a binary called `snunit`
+You can also build a GraalVM native-image with:
+
+```bash
+scala-cli package --native-image snunit-cli -o snunit
+```
+
+This generates binaries called `snunit`

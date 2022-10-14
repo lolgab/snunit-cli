@@ -4,6 +4,12 @@
 import mainargs._
 
 object Main {
+  def readRuntimeMacro()(using scala.quoted.Quotes): Expr[String] =
+    import quotes.reflect._
+    val runtime = os.read(os.Path(SourceFile.current.path) / os.up / os.up / "snunit-cli-runtime" / "runtime.scala")
+    Expr(runtime)
+
+  inline def runtime: String = ${ readRuntimeMacro() }
   private implicit object PathRead
       extends TokensReader[os.Path](
         "path",
@@ -60,7 +66,6 @@ object Main {
     val runtimeDest = targetDir / "runtime.scala"
     val mainDest = targetDir / "snunit-main.scala"
     if (!noRuntime) {
-      val runtime = os.read(os.resource / "runtime.scala")
       os.write.over(runtimeDest, runtime)
       os.write.over(mainDest, main)
     } else {

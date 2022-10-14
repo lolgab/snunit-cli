@@ -1,5 +1,5 @@
-import $dep.`org.scalameta::munit:0.7.29`
-import $dep.`com.lihaoyi::requests:0.7.0`
+//> using lib "org.scalameta::munit:0.7.29"
+//> using lib "com.lihaoyi::requests:0.7.0"
 
 import munit._
 
