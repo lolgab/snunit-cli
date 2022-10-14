@@ -1,5 +1,5 @@
-import $dep.`com.lihaoyi::os-lib:0.8.1`
-import $dep.`com.lihaoyi::mainargs:0.3.0`
+//> using lib "com.lihaoyi::os-lib::0.8.1"
+//> using lib "com.lihaoyi::mainargs::0.3.0"
 
 import mainargs._
 
