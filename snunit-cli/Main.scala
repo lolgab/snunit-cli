@@ -88,8 +88,8 @@ object Main {
       scalaCliArgs: Seq[os.Shellable]
   ) = {
     val targetDir = prepareSources(path, noRuntime)
-    os.write.over(
-      targetDir / "config.scala",
+    os.write(
+      targetDir / "snunit-cli-config.scala",
       "//> using platform \"scala-native\""
     )
     val outputPath = cacheDir / s"${path.last}.out"
