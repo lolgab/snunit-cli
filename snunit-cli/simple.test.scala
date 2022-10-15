@@ -123,7 +123,7 @@ class SimpleTest extends FunSuite {
       // Wait for Docker to start
       Thread.sleep(100)
       assertEquals(requests.get(s"http://localhost:$port").text(), toSend)
-      assertEquals(requests.get(s"http://localhost:$port/foo").text(), "bsar")
+      assertEquals(requests.get(s"http://localhost:$port/foo").text(), "bar")
     }
   }
 
