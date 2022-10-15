@@ -48,13 +48,14 @@ object Main {
 
   private val scalaNativeVersionArgs = Seq("--native-version", "0.4.7")
 
+  private def cleanCache() = os.remove.all(cacheDir)
+
   private def prepareSources(path: os.Path, noRuntime: Boolean) = {
     def fail() = sys.exit(1)
     if (!os.exists(path)) {
       println(s"The path $path doesn't exist. Exiting.")
       fail()
     }
-    os.remove.all(cacheDir)
     os.makeDir.all(cacheDir)
     val targetDir = cacheDir / path.last.stripSuffix(".scala")
     os.makeDir.all(targetDir)
@@ -122,6 +123,7 @@ object Main {
 
   @main
   def run(config: Config): Unit = {
+    cleanCache()
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
     val unitConfig = makeConfig(outputPath, config.static, config.port)
     unitd.run(unitConfig)
@@ -129,6 +131,7 @@ object Main {
 
   @main
   def runJvm(config: Config): Unit = {
+    cleanCache()
     val targetDir = prepareSources(config.path, config.`no-runtime`.value)
     os.remove(targetDir / "config.scala")
     val outputPath = cacheDir / s"${config.path.last}.out"
@@ -140,6 +143,7 @@ object Main {
 
   @main
   def runBackground(config: Config): Unit = {
+    cleanCache()
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
     val unitConfig = makeConfig(outputPath, config.static, config.port)
     val pid = unitd.runBackground(unitConfig)
@@ -159,6 +163,7 @@ object Main {
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
         "snunit"
   ): Unit = {
+    cleanCache()
     val clangImage = "lolgab/snunit-clang:0.0.3"
     Using(Container(os.proc(
         "docker",
@@ -182,10 +187,8 @@ object Main {
       val clangPath = cacheDir / "clang.sh"
       os.remove.all(cacheDir)
       os.makeDir.all(cacheDir)
-      os.remove.all(clangPath)
       os.write(clangPath, clangScript("clang"), perms = "rwxr-xr-x")
       val clangppPath = cacheDir / "clangpp.sh"
-      os.remove.all(clangppPath)
       os.write(clangppPath, clangScript("clang++"), perms = "rwxr-xr-x")
 
       val outputPath = buildBinary(
@@ -225,7 +228,8 @@ object Main {
       os.write(dockerfilePath, dockerfile)
       os.proc("docker", "build", "-t", dockerImage, ".").call(cwd = cacheDir)
       println(
-        s"""Your docker image was built. Run it with:
+        s"""
+           |Your docker image was built. Run it with:
            |docker run --rm -p ${config.port}:${config.port} $dockerImage""".stripMargin
       )
     }

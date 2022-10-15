@@ -20,23 +20,21 @@ object Installer {
   }
   def installWithAptGet(): Unit = {
     installGeneric(
-      installUnitCommands = """set -e +o pipefail
-        |apt-get update && apt-get install sudo
-        |sudo apt-get update && apt-get install curl
-        |sudo curl --output /usr/share/keyrings/nginx-keyring.gpg https://unit.nginx.org/keys/nginx-keyring.gpg
+      installUnitCommands = """
+        |set -e +o pipefail
+        |sudo apt-get update && sudo apt-get install -y curl
+        |sudo curl -s --compressed --output /usr/share/keyrings/nginx-keyring.gpg https://unit.nginx.org/keys/nginx-keyring.gpg
         |source /etc/os-release && echo $UBUNTU_CODENAME
-        |sudo tee 'deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ $UBUNTU_CODENAME unit
-        |deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ jammy unit' > sudo tee -a /etc/apt/sources.list.d/unit.list
+        |echo "deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ $UBUNTU_CODENAME unit
+        |deb-src [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://packages.nginx.org/unit/ubuntu/ jammy unit" | sudo tee -a /etc/apt/sources.list.d/unit.list
         |
         |sudo apt-get update
         |sudo apt-get install -y unit unit-dev
         |""".stripMargin,
       installScalaCliCommands = """set -e +o pipefail
-        |sudo curl -s --compressed -o /usr/share/keyrings/scala-cli-keyring.gpg "https://virtuslab.github.io/scala-cli-packages/KEY.gpg" | sudo apt-key add -
-        |echo 'deb [signed-by=/usr/share/keyrings/nginx-keyring.gpg] https://virtuslab.github.io/scala-cli-packages/debian ./' | sudo tee -a /etc/apt/sources.list.d/scalacli.list
-        |sudo apt update
-        |sudo apt install -y scala-cli
-      """.stripMargin
+        |curl -fLo scala-cli.deb https://github.com/Virtuslab/scala-cli/releases/latest/download/scala-cli-x86_64-pc-linux.deb
+        |sudo dpkg -i scala-cli.deb
+        |""".stripMargin
     )
   }
 }
