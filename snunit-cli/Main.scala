@@ -2,6 +2,8 @@
 //> using lib "com.lihaoyi::mainargs::0.3.0"
 
 import mainargs._
+import scala.util._
+import scala.util.Using.Releasable
 
 object Main {
   inline def runtime: String = ${ readRuntimeMacro() }
@@ -52,6 +54,7 @@ object Main {
       println(s"The path $path doesn't exist. Exiting.")
       fail()
     }
+    os.remove.all(cacheDir)
     os.makeDir.all(cacheDir)
     val targetDir = cacheDir / path.last.stripSuffix(".scala")
     os.makeDir.all(targetDir)
@@ -144,14 +147,20 @@ object Main {
   }
 
   @main
+  def installTools(): Unit = {
+    val isBrewInstalled = os.proc("command", "-v", "brew").call(check = false).exitCode == 0
+    if(isBrewInstalled) Installer.installWithBrew()
+    else Installer.installWithAptGet()
+  }
+
+  @main
   def buildDocker(
       config: Config,
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
         "snunit"
   ): Unit = {
     val clangImage = "lolgab/snunit-clang:0.0.3"
-    val container = os
-      .proc(
+    Using(Container(os.proc(
         "docker",
         "run",
         "-v",
@@ -164,8 +173,8 @@ object Main {
       .call()
       .out
       .text()
-      .trim
-    try {
+      .trim)
+    ){ container =>
       def clangScript(entrypoint: String) = s"""#!/bin/bash
         |docker exec $container $entrypoint "$$@" 
         |""".stripMargin
@@ -193,10 +202,7 @@ object Main {
       val staticInCacheDir = config.static.map { static =>
         val targetStatic = cacheDir / "static"
         os.makeDir.all(targetStatic)
-        os.list(static).foreach(f =>
-          pprint.pprintln(f)
-          os.copy.into(f, targetStatic)
-        )
+        os.list(static).foreach(os.copy.into(_, targetStatic))
         targetStatic
       }
       val configFile = stateDir / "conf.json"
@@ -222,9 +228,6 @@ object Main {
         s"""Your docker image was built. Run it with:
            |docker run --rm -p ${config.port}:${config.port} $dockerImage""".stripMargin
       )
-    } finally {
-      println(s"killing container $container")
-      os.proc("docker", "kill", container).call()
     }
   }
 

@@ -2,6 +2,7 @@
 //> using lib "com.lihaoyi::requests:0.7.0"
 
 import munit._
+import scala.util._
 
 class SimpleTest extends FunSuite {
   val port = 9000
@@ -11,7 +12,9 @@ class SimpleTest extends FunSuite {
     os.remove.all(workdir)
     os.makeDir.all(workdir)
     os.write(workdir / "handler.scala", handler)
-    Main.runBackground(Main.Config(workdir, static = None, port, mainargs.Flag(noRuntime)))
+    Main.runBackground(
+      Main.Config(workdir, static = None, port, mainargs.Flag(noRuntime))
+    )
   }
   test("should run simple example") {
     val toSend = "Simple test"
@@ -40,7 +43,14 @@ class SimpleTest extends FunSuite {
     os.makeDir.all(workdir)
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"$toSend\"")
-    Main.runBackground(Main.Config(file, static = None, port, `no-runtime` = mainargs.Flag(false)))
+    Main.runBackground(
+      Main.Config(
+        file,
+        static = None,
+        port,
+        `no-runtime` = mainargs.Flag(false)
+      )
+    )
     assertEquals(requests.get(url).text(), toSend)
   }
   test("should share static files") {
@@ -51,7 +61,14 @@ class SimpleTest extends FunSuite {
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"\"")
     os.write(staticDir / "foo", "bar")
-    Main.runBackground(Main.Config(file, static = Some(staticDir), port, `no-runtime` = mainargs.Flag(false)))
+    Main.runBackground(
+      Main.Config(
+        file,
+        static = Some(staticDir),
+        port,
+        `no-runtime` = mainargs.Flag(false)
+      )
+    )
     assertEquals(requests.get(s"$url/foo").text(), "bar")
   }
   test("Either handler") {
@@ -85,22 +102,28 @@ class SimpleTest extends FunSuite {
     val port = 8080
     val imageName = "simple-test-image"
     Main.buildDocker(
-      Main.Config(workdir, Some(staticDir), port, `no-runtime` = mainargs.Flag(false)),
+      Main.Config(
+        workdir,
+        Some(staticDir),
+        port,
+        `no-runtime` = mainargs.Flag(false)
+      ),
       imageName
     )
-    val container = os
-      .proc("docker", "run", "-p", s"$port:$port", "-d", imageName)
-      .call()
-      .out
-      .text()
-      .trim
-    // Wait for Docker to start
-    Thread.sleep(100)
-    try {
+    Using(
+      Container(
+        os
+          .proc("docker", "run", "--rm", "-p", s"$port:$port", "-d", imageName)
+          .call()
+          .out
+          .text()
+          .trim
+      )
+    ) { container =>
+      // Wait for Docker to start
+      Thread.sleep(100)
       assertEquals(requests.get(s"http://localhost:$port").text(), toSend)
-      assertEquals(requests.get(s"http://localhost:$port/foo").text(), "bar")
-    } finally {
-      os.proc("docker", "kill", container).call(check = false)
+      assertEquals(requests.get(s"http://localhost:$port/foo").text(), "bsar")
     }
   }
 
