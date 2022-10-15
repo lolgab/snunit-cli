@@ -148,7 +148,7 @@ object Main {
 
   @main
   def installTools(): Unit = {
-    val isBrewInstalled = os.proc("command", "-v", "brew").call(check = false).exitCode == 0
+    val isBrewInstalled = os.proc("bash", "-c", "command -v brew").call(check = false).exitCode == 0
     if(isBrewInstalled) Installer.installWithBrew()
     else Installer.installWithAptGet()
   }
