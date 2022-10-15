@@ -6,10 +6,10 @@ object Installer {
     println("Installing required tools for SNUnit...")
     println("""Installing NGINX Unit https://unit.nginx.org/installation
       |""".stripMargin)
-    os.proc("bash", "-c", installUnitCommands).call(stdout = os.Inherit)
+    os.proc("bash", "-c", installUnitCommands).call(stdin = os.Inherit, stdout = os.Inherit)
     println("""Installing scala-cli https://scala-cli.virtuslab.org/install
       |""".stripMargin)
-    os.proc("bash", "-c", installScalaCliCommands).call(stdout = os.Inherit)
+    os.proc("bash", "-c", installScalaCliCommands).call(stdin = os.Inherit, stdout = os.Inherit)
     println("Everything is installed. You can now develop with SNUnit.")
   }
   def installWithBrew(): Unit = {
