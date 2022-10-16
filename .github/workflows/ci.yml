@@ -4,7 +4,7 @@ on: push
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - uses: coursier/cache-action@v6
@@ -12,18 +12,12 @@ jobs:
         with:
           jvm: temurin:1.17
           apps: scala-cli
-      - name: Install NGINX Unit
-        run: |
-          curl -sL https://nginx.org/keys/nginx_signing.key | sudo apt-key add -
-          echo "deb https://packages.nginx.org/unit/ubuntu/ focal unit" | sudo tee -a /etc/apt/sources.list.d/unit.list
-          echo "deb-src https://packages.nginx.org/unit/ubuntu/ focal unit" | sudo tee -a /etc/apt/sources.list.d/unit.list
-          sudo apt-get update
-          unit_version="1.28*"
-          sudo apt-get install -y libuv1-dev unit=$unit_version unit-dev=$unit_version
+      - name: Install tools
+        run: scala-cli run snunit-cli -- installTools
       - name: Test
         run: scala-cli test snunit-cli
       - name: Create binary
-        run: scala-cli package snunit-cli -o snunit
+        run: scala-cli package snunit-cli --native-image -o snunit
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

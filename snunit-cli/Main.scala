@@ -2,6 +2,7 @@
 //> using lib "com.lihaoyi::mainargs::0.3.0"
 
 import mainargs._
+import scala.util._
 
 object Main {
   inline def runtime: String = ${ readRuntimeMacro() }
@@ -44,7 +45,11 @@ object Main {
 
   private val cacheDir = os.pwd / ".snunit"
 
+  private val snunitConfigFile = os.rel / "snunit-cli-config.scala"
+
   private val scalaNativeVersionArgs = Seq("--native-version", "0.4.7")
+
+  private def cleanCache() = os.remove.all(cacheDir)
 
   private def prepareSources(path: os.Path, noRuntime: Boolean) = {
     def fail() = sys.exit(1)
@@ -84,8 +89,8 @@ object Main {
       scalaCliArgs: Seq[os.Shellable]
   ) = {
     val targetDir = prepareSources(path, noRuntime)
-    os.write.over(
-      targetDir / "config.scala",
+    os.write(
+      targetDir / snunitConfigFile,
       "//> using platform \"scala-native\""
     )
     val outputPath = cacheDir / s"${path.last}.out"
@@ -119,6 +124,7 @@ object Main {
 
   @main
   def run(config: Config): Unit = {
+    cleanCache()
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
     val unitConfig = makeConfig(outputPath, config.static, config.port)
     unitd.run(unitConfig)
@@ -126,8 +132,9 @@ object Main {
 
   @main
   def runJvm(config: Config): Unit = {
+    cleanCache()
     val targetDir = prepareSources(config.path, config.`no-runtime`.value)
-    os.remove(targetDir / "config.scala")
+    os.remove(targetDir / snunitConfigFile)
     val outputPath = cacheDir / s"${config.path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
@@ -137,10 +144,18 @@ object Main {
 
   @main
   def runBackground(config: Config): Unit = {
+    cleanCache()
     val outputPath = buildBinary(config.path, config.`no-runtime`.value, scalaCliArgs = Seq())
     val unitConfig = makeConfig(outputPath, config.static, config.port)
     val pid = unitd.runBackground(unitConfig)
     println(s"Unit is running in the background with pid $pid")
+  }
+
+  @main
+  def installTools(): Unit = {
+    val isBrewInstalled = os.proc("bash", "-c", "command -v brew").call(check = false).exitCode == 0
+    if(isBrewInstalled) Installer.installWithBrew()
+    else Installer.installWithAptGet()
   }
 
   @main
@@ -149,9 +164,9 @@ object Main {
       @arg(doc = "Full name of the docker image to build") dockerImage: String =
         "snunit"
   ): Unit = {
+    cleanCache()
     val clangImage = "lolgab/snunit-clang:0.0.3"
-    val container = os
-      .proc(
+    Using(Container(os.proc(
         "docker",
         "run",
         "-v",
@@ -164,8 +179,8 @@ object Main {
       .call()
       .out
       .text()
-      .trim
-    try {
+      .trim)
+    ){ container =>
       def clangScript(entrypoint: String) = s"""#!/bin/bash
         |docker exec $container $entrypoint "$$@" 
         |""".stripMargin
@@ -173,10 +188,8 @@ object Main {
       val clangPath = cacheDir / "clang.sh"
       os.remove.all(cacheDir)
       os.makeDir.all(cacheDir)
-      os.remove.all(clangPath)
       os.write(clangPath, clangScript("clang"), perms = "rwxr-xr-x")
       val clangppPath = cacheDir / "clangpp.sh"
-      os.remove.all(clangppPath)
       os.write(clangppPath, clangScript("clang++"), perms = "rwxr-xr-x")
 
       val outputPath = buildBinary(
@@ -193,10 +206,7 @@ object Main {
       val staticInCacheDir = config.static.map { static =>
         val targetStatic = cacheDir / "static"
         os.makeDir.all(targetStatic)
-        os.list(static).foreach(f =>
-          pprint.pprintln(f)
-          os.copy.into(f, targetStatic)
-        )
+        os.list(static).foreach(os.copy.into(_, targetStatic))
         targetStatic
       }
       val configFile = stateDir / "conf.json"
@@ -219,12 +229,10 @@ object Main {
       os.write(dockerfilePath, dockerfile)
       os.proc("docker", "build", "-t", dockerImage, ".").call(cwd = cacheDir)
       println(
-        s"""Your docker image was built. Run it with:
+        s"""
+           |Your docker image was built. Run it with:
            |docker run --rm -p ${config.port}:${config.port} $dockerImage""".stripMargin
       )
-    } finally {
-      println(s"killing container $container")
-      os.proc("docker", "kill", container).call()
     }
   }
 

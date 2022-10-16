@@ -4,11 +4,9 @@ SNUnit CLI is a CLI for SNUnit.
 
 ## Install
 
-You need to install:
-- [scala-cli](https://scala-cli.virtuslab.org/).
-- [NGINX Unit](https://unit.nginx.org/installation)
-
 Then you can download the `snunit` script from [Github Releases](https://github.com/lolgab/snunit-cli/releases)
+
+Then you need to install the needed tooling with `./snunit installTools`
 
 ## First example
 
