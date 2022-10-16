@@ -18,7 +18,6 @@ object unitd {
     closeUnitd()
     val state = dest / "state"
     os.makeDir.all(state)
-    os.write.over(state / "conf.json", config)
     val control = dest / "control.sock"
     os.remove(control)
     val proc = os.proc(
@@ -37,7 +36,7 @@ object unitd {
     println("Waiting for unit to start...")
     // This returns after Unit is started
     os.proc("curl", "-s", "--unix-socket", control, "http://localhost").call()
-    os.proc("curl", "-s", "-X", "PUT", "-d", ujson.write(config), "--unix-socket", control, "http://localhost").call()
+    os.proc("curl", "-s", "-X", "PUT", "-d", ujson.write(config), "--unix-socket", control, "http://localhost/config").call()
     proc
   }
   def runBackground(config: ujson.Obj): Long = {

@@ -3,7 +3,6 @@
 
 import mainargs._
 import scala.util._
-import scala.util.Using.Releasable
 
 object Main {
   inline def runtime: String = ${ readRuntimeMacro() }
@@ -45,6 +44,8 @@ object Main {
   }
 
   private val cacheDir = os.pwd / ".snunit"
+
+  private val snunitConfigFile = os.rel / "snunit-cli-config.scala"
 
   private val scalaNativeVersionArgs = Seq("--native-version", "0.4.7")
 
@@ -89,7 +90,7 @@ object Main {
   ) = {
     val targetDir = prepareSources(path, noRuntime)
     os.write(
-      targetDir / "snunit-cli-config.scala",
+      targetDir / snunitConfigFile,
       "//> using platform \"scala-native\""
     )
     val outputPath = cacheDir / s"${path.last}.out"
@@ -133,7 +134,7 @@ object Main {
   def runJvm(config: Config): Unit = {
     cleanCache()
     val targetDir = prepareSources(config.path, config.`no-runtime`.value)
-    os.remove(targetDir / "config.scala")
+    os.remove(targetDir / snunitConfigFile)
     val outputPath = cacheDir / s"${config.path.last}.out"
     os.remove(outputPath)
     os.remove.all(targetDir / ".scala-build" / "project" / "native")
