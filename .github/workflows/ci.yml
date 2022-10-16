@@ -4,7 +4,17 @@ on: push
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-11
+            output_filename: snunit
+            uploaded_filename: snunit-x86_64-apple-darwin
+          - os: ubuntu-22.04
+            output_filename: snunit
+            uploaded_filename: snunit-x86_64-pc-linux
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: coursier/cache-action@v6
@@ -17,9 +27,45 @@ jobs:
       - name: Test
         run: scala-cli test snunit-cli
       - name: Create binary
-        run: scala-cli package snunit-cli --native-image -o snunit
-      - name: Release
+        run: scala-cli package snunit-cli --native-image -o bin/snunit
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          path: bin/${{ matrix.output_filename }}
+          name: ${{ matrix.uploaded_filename }}
+          if-no-files-found: error
+  release:
+    needs: build
+    name: Release
+    # if: startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main')
+    runs-on: ubuntu-22.04
+    env: 
+      BINARIES: binaries/
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' 
+          java-version: '17'
+      - name: Download binaries
+        uses: actions/download-artifact@v2
+        id: download
+        with:
+          path: binaries
+
+      - name: Rename binaries 
+        run: |
+          cd "${{steps.download.outputs.download-path}}"
+          mv snunit-x86_64-apple-darwin snunit-x86_64-apple-darwin-dir
+          mv snunit-x86_64-apple-darwin-dir/snunit snunit-x86_64-apple-darwin
+          mv snunit-x86_64-pc-linux snunit-x86_64-pc-linux-dir
+          mv snunit-x86_64-pc-linux-dir/snunit snunit-x86_64-pc-linux
+          ls -R .
+      - name: Upload release binaries
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: snunit
+          files: "${{steps.download.outputs.download-path}}/**/snunit-*"
