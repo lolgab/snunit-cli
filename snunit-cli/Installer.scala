@@ -1,25 +1,32 @@
 object Installer {
+  private def runCommands(commands: String) = os.proc("bash", "-c", commands).call(stdin = os.Inherit, stdout = os.Inherit)
+
   private def installGeneric(
+    installClangCommands: String,
     installUnitCommands: String,
     installScalaCliCommands: String,
   ): Unit = {
     println("Installing required tools for SNUnit...")
+    println("Installing Clang\n")
+    runCommands(installUnitCommands)
     println("""Installing NGINX Unit https://unit.nginx.org/installation
       |""".stripMargin)
-    os.proc("bash", "-c", installUnitCommands).call(stdin = os.Inherit, stdout = os.Inherit)
+    runCommands(installUnitCommands)
     println("""Installing scala-cli https://scala-cli.virtuslab.org/install
       |""".stripMargin)
-    os.proc("bash", "-c", installScalaCliCommands).call(stdin = os.Inherit, stdout = os.Inherit)
+    runCommands(installScalaCliCommands)
     println("Everything is installed. You can now develop with SNUnit.")
   }
   def installWithBrew(): Unit = {
     installGeneric(
+      installClangCommands = "brew install clang",
       installUnitCommands = "brew install nginx/unit/unit",
       installScalaCliCommands = "brew install Virtuslab/scala-cli/scala-cli"
     )
   }
   def installWithAptGet(): Unit = {
     installGeneric(
+      installClangCommands = "sudo apt-get update && sudo apt-get install clang",
       installUnitCommands = """
         |set -e +o pipefail
         |sudo apt-get update && sudo apt-get install -y curl
