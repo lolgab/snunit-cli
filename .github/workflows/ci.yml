@@ -27,7 +27,13 @@ jobs:
       - name: Test
         run: scala-cli test snunit-cli
       - name: Create binary
-        run: scala-cli package snunit-cli --native-image -o bin/snunit
+        run: |
+          base_command="scala-cli package snunit-cli --native-image -o bin/snunit -- --no-fallback"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            eval "$base_command" --static
+          else
+            eval "$base_command"
+          fi
       - name: Upload artifacts
         uses: actions/upload-artifact@master
         with:
