@@ -24,7 +24,7 @@ class SimpleTest extends FunSuite {
   test("should run with --no-runtime") {
     val toSend = "Simple test"
     val main = s"""
-      |//> using scala "3.2.0"
+      |//> using scala "3.2.1"
       |import $$dep.`com.github.lolgab::snunit::0.1.1`
       |import snunit._
       |

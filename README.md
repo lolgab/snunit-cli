@@ -97,7 +97,7 @@ create your SNUnit HTTP server manually.
 For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
 
 ```scala
-//> using lib "com.github.lolgab::snunit-cask::0.1.1"
+//> using lib "com.github.lolgab::snunit-cask::0.2.4"
 
 object MinimalApplication extends cask.MainRoutes {
   @cask.get("/")

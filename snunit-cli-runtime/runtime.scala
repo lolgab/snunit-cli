@@ -1,6 +1,6 @@
-//> using scala "3.2.0"
+//> using scala "3.2.1"
 
-//> using lib "com.github.lolgab::snunit::0.1.1"
+//> using lib "com.github.lolgab::snunit::0.2.4"
 
 import snunit._
 
