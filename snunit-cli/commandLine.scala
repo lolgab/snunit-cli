@@ -11,11 +11,16 @@ given Argument[os.Path] with
     }
   def defaultMetavar = "path"
 
+given Argument[os.Shellable] =
+  Argument.from("'arg1 arg2'")(string => Validated.valid(os.Shellable(string.split(' ').toSeq)))
+
 val pathOpt = Opts.argument[os.Path]()
 val staticOpt = Opts.option[os.Path]("static", "path to the directory with static data you want to serve with your app").orNone
 val portOpt = Opts.option[Int]("port", "port where to run your application").withDefault(9000)
 val noRuntimeFlag = Opts.flag("no-runtime", "disable the function runtime and provide your own SNUnit server").orFalse
-val configOpts: Opts[Config] = (pathOpt, staticOpt, portOpt, noRuntimeFlag).mapN(Config.apply)
+val extraScalaCliArgs = Opts.option[os.Shellable]("scala-cli-args", "extra arguments to pass to scala-cli", metavar = "'--opt1-key opt1-value --opt2-key opt2-value'")
+val configOpts: Opts[Config] =
+  (pathOpt, staticOpt, portOpt, noRuntimeFlag, extraScalaCliArgs).mapN(Config.apply)
 
 val runCommand = Opts.subcommand(
   name = "run",

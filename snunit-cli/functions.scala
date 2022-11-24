@@ -61,7 +61,7 @@ private def prepareSources(path: os.Path, noRuntime: Boolean) = {
       os.symlink(dest, p)
     }
   }
-  val runtimeDest = targetDir / "runtime.scala"
+  val runtimeDest = targetDir / "snunit-runtime.scala"
   val mainDest = targetDir / "snunit-main.scala"
   if (!noRuntime) {
     os.write.over(runtimeDest, runtime)
@@ -108,12 +108,13 @@ case class Config(
     path: os.Path,
     static: Option[os.Path],
     port: Int,
-    `no-runtime`: Boolean
+    `no-runtime`: Boolean,
+    scalaCliExtraArgs: os.Shellable
 )
 
 def run(config: Config): Unit = {
   cleanCache()
-  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq())
+  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq(config.scalaCliExtraArgs))
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   unitd.run(unitConfig)
 }
@@ -131,7 +132,7 @@ def runJvm(config: Config): Unit = {
 
 def runBackground(config: Config): Unit = {
   cleanCache()
-  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq())
+  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq(config.scalaCliExtraArgs))
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   val pid = unitd.runBackground(unitConfig)
   println(s"Unit is running in the background with pid $pid")
@@ -178,7 +179,7 @@ def buildDocker(
     val outputPath = buildBinary(
       config.path,
       config.`no-runtime`,
-      Seq("--native-clang", clangPath, "--native-clangpp", clangppPath)
+      Seq("--native-clang", clangPath, "--native-clangpp", clangppPath, config.scalaCliExtraArgs)
     )
     val workdirInContainer = os.root / "workdir"
     val staticDirInContainer = workdirInContainer / "static"

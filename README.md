@@ -115,6 +115,14 @@ After that you can run your server with:
 ./snunit run --port 8081 --no-runtime example
 ```
 
+## Passing custom options to scala-cli
+
+You can pass extra options to scala-cli by using the `--scala-cli-args` option.
+
+```
+./snunit run example --scala-cli-args '--native-mode release-fast'
+```
+
 ## Contributing
 
 ### Building
