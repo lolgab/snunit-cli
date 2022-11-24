@@ -1,20 +1,6 @@
-//> using scala "3"
-//> using lib "com.lihaoyi::os-lib::0.8.1"
-//> using lib "com.monovore::decline::2.3.1"
-
-import cats.data.Validated
-import cats.implicits._
-import com.monovore.decline._
 import scala.util._
 
 inline def runtime: String = ${ readRuntimeMacro() }
-given Argument[os.Path] with
-  def read(string: String) = try {
-      Validated.valid(os.Path(string, os.pwd))
-    } catch {
-      case _ => Validated.invalidNel(s"invalid path $string. the path should be relative to ${os.pwd}")
-    }
-  def defaultMetavar = "file or folder with your app"
 
 val main = """import snunit._
   |
@@ -117,22 +103,13 @@ private def buildBinary(
   )
   outputPath
 }
+
 case class Config(
     path: os.Path,
     static: Option[os.Path],
     port: Int,
     `no-runtime`: Boolean
 )
-val pathOpt = Opts.argument[os.Path]()
-val staticOpt = Opts.option[os.Path]("static", "path to the directory with static data you want to serve with your app").orNone
-val portOpt = Opts.option[Int]("port", "port where to run your application").withDefault(9000)
-val noRuntimeFlag = Opts.flag("no-runtime", "disable the function runtime and provide your own SNUnit server").orFalse
-val configOpts: Opts[Config] = (pathOpt, staticOpt, portOpt, noRuntimeFlag).mapN(Config.apply)
-
-val runCommand = Opts.subcommand(
-  name = "run",
-  help = "Run your app on local NGINX Unit"
-)(configOpts).map(config => run(config))
 
 def run(config: Config): Unit = {
   cleanCache()
@@ -140,10 +117,6 @@ def run(config: Config): Unit = {
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   unitd.run(unitConfig)
 }
-val runJvmCommand = Opts.subcommand(
-  name = "runJvm",
-  help = "Run your app on the JVM"
-)(configOpts).map(config => runJvm(config))
 
 def runJvm(config: Config): Unit = {
   cleanCache()
@@ -156,12 +129,6 @@ def runJvm(config: Config): Unit = {
   proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> config.port.toString))
 }
 
-
-val runBackgroundCommand = Opts.subcommand(
-  name = "run",
-  help = "Run your app in background on a local NGINX Unit"
-)(configOpts).map(config => runBackground(config))
-
 def runBackground(config: Config): Unit = {
   cleanCache()
   val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq())
@@ -170,22 +137,11 @@ def runBackground(config: Config): Unit = {
   println(s"Unit is running in the background with pid $pid")
 }
 
-val installToolsCommand: Opts[Unit] = Opts.subcommand(
-  name = "install-tools",
-  help = "Install the tools needed to run apps. Works on Mac OS X (brew) and Ubuntu"
-)(Opts.unit).map(_ => installTools())
-
 def installTools(): Unit = {
   val isBrewInstalled = os.proc("bash", "-c", "command -v brew").call(check = false).exitCode == 0
-  if(isBrewInstalled) Installer.installWithBrew()
-  else Installer.installWithAptGet()
+  if(isBrewInstalled) installWithBrew()
+  else installWithAptGet()
 }
-
-val dockerImageOpt = Opts.option[String]("docker-image", "Full name of the docker image to build").withDefault("snunit")
-val buildDockerCommand = Opts.subcommand(
-  name = "build-docker",
-  help = "Build a Docker image with your app"
-)((configOpts,dockerImageOpt).mapN((config, dockerImage) => buildDocker(config, dockerImage)))
 
 def buildDocker(
     config: Config,
@@ -262,13 +218,3 @@ def buildDocker(
     )
   }
 }
-
-val mainCommand = Command("snunit", "run your Scala Native code as a serve with ease")(
-  runCommand orElse
-    runBackgroundCommand orElse
-    runJvmCommand orElse
-    installToolsCommand orElse
-    buildDockerCommand
-)
-
-object App extends CommandApp(mainCommand)
