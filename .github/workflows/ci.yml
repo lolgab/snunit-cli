@@ -18,12 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: coursier/cache-action@v6
-      - uses: coursier/setup-action@v1.2.0-M3
+      - uses: coursier/setup-action@v1.3.0
         with:
           jvm: temurin:1.17
           apps: scala-cli
       - name: Install tools
-        run: scala-cli run snunit-cli -- installTools
+        run: scala-cli run snunit-cli -- install-tools
       - name: Test
         run: scala-cli test snunit-cli
       - name: Create binary
