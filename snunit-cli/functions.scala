@@ -37,7 +37,7 @@ private val cacheDir = os.pwd / ".snunit"
 
 private val snunitConfigFile = os.rel / "snunit-cli-config.scala"
 
-private val scalaNativeVersionArgs = Seq("--native-version", "0.4.7")
+private val scalaNativeVersionArgs = Seq("--native-version", "0.4.9")
 
 private def cleanCache() = os.remove.all(cacheDir)
 
