@@ -12,8 +12,8 @@ class SimpleTest extends FunSuite {
     os.remove.all(workdir)
     os.makeDir.all(workdir)
     os.write(workdir / "handler.scala", handler)
-    Main.runBackground(
-      Main.Config(workdir, static = None, port, mainargs.Flag(noRuntime))
+    runBackground(
+      Config(workdir, static = None, port, noRuntime)
     )
   }
   test("should run simple example") {
@@ -43,12 +43,12 @@ class SimpleTest extends FunSuite {
     os.makeDir.all(workdir)
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"$toSend\"")
-    Main.runBackground(
-      Main.Config(
+    runBackground(
+      Config(
         file,
         static = None,
         port,
-        `no-runtime` = mainargs.Flag(false)
+        `no-runtime` = false
       )
     )
     assertEquals(requests.get(url).text(), toSend)
@@ -61,12 +61,12 @@ class SimpleTest extends FunSuite {
     val file = workdir / "handler.scala"
     os.write(file, s"def handler = \"\"")
     os.write(staticDir / "foo", "bar")
-    Main.runBackground(
-      Main.Config(
+    runBackground(
+      Config(
         file,
         static = Some(staticDir),
         port,
-        `no-runtime` = mainargs.Flag(false)
+        `no-runtime` = false
       )
     )
     assertEquals(requests.get(s"$url/foo").text(), "bar")
@@ -101,12 +101,12 @@ class SimpleTest extends FunSuite {
     os.write(staticDir / "foo", "bar")
     val port = 8080
     val imageName = "simple-test-image"
-    Main.buildDocker(
-      Main.Config(
+    buildDocker(
+      Config(
         workdir,
         Some(staticDir),
         port,
-        `no-runtime` = mainargs.Flag(false)
+        `no-runtime` = false
       ),
       imageName
     )
