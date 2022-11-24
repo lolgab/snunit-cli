@@ -6,7 +6,7 @@ SNUnit CLI is a CLI for SNUnit.
 
 Then you can download the `snunit` script from [Github Releases](https://github.com/lolgab/snunit-cli/releases)
 
-Then you need to install the needed tooling with `./snunit installTools`
+Then you need to install the needed tooling with `./snunit install-tools`
 
 ## First example
 
@@ -21,11 +21,11 @@ def handler(name: String): String = s"Hello $name!"
 After that you can run your function with:
 
 ```bash
-./snunit run --path example --port 8081
+./snunit run --port 8081 example
 ```
 
 ```
-> ./snunit run --path example --port 8081
+> ./snunit run --port 8081 example
 
 Compiling project (Scala 3.1.1, Scala Native)
 Compiled project (Scala 3.1.1, Scala Native)
@@ -57,7 +57,7 @@ The Jvm implementation is a thin layer on top of the [Undertow](https://undertow
 You can run on Jvm using the `runJvm` command:
 
 ```bash
-$ snunit runJvm --path func.scala --port 9001
+$ snunit run-jvm --port 9001 func.scala
 feb 10, 2022 11:33:57 AM io.undertow.Undertow start
 INFO: starting server: Undertow - 2.2.14.Final
 feb 10, 2022 11:33:57 AM org.xnio.Xnio <clinit>
@@ -112,7 +112,7 @@ object MinimalApplication extends cask.MainRoutes {
 After that you can run your server with:
 
 ```bash
-./snunit run --path example --port 8081 --no-runtime
+./snunit run --port 8081 --no-runtime example
 ```
 
 ## Contributing

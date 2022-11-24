@@ -44,11 +44,11 @@ val buildDockerCommand = Opts.subcommand(
 )((configOpts,dockerImageOpt).mapN((config, dockerImage) => buildDocker(config, dockerImage)))
 
 val mainCommand = Command("snunit", "run your Scala Native code as a HTTP server with ease")(
-  runCommand orElse
-    runBackgroundCommand orElse
-    runJvmCommand orElse
-    installToolsCommand orElse
-    buildDockerCommand
+  runCommand
+    .orElse(runBackgroundCommand)
+    .orElse(runJvmCommand)
+    .orElse(installToolsCommand)
+    .orElse(buildDockerCommand)
 )
 
 object App extends CommandApp(mainCommand)
