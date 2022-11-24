@@ -7,18 +7,27 @@ import scala.util._
 class SimpleTest extends FunSuite {
   val port = 9000
   val url = s"http://localhost:$port"
-  def runHandler(handler: String, noRuntime: Boolean = false) = {
+  def runHandler(
+      handler: String,
+      noRuntime: Boolean = false,
+      scalaCliExtraArgs: Seq[String] = Seq.empty
+  ) = {
     val workdir = os.pwd / ".snunit-test" / "test" / "example"
     os.remove.all(workdir)
     os.makeDir.all(workdir)
     os.write(workdir / "handler.scala", handler)
     runBackground(
-      Config(workdir, static = None, port, noRuntime)
+      Config(workdir, static = None, port, noRuntime, scalaCliExtraArgs)
     )
   }
   test("should run simple example") {
     val toSend = "Simple test"
     runHandler(s"def handler = \"$toSend\"")
+    assertEquals(requests.get(url).text(), toSend)
+  }
+  test("should run with scala-cli release-mode") {
+    val toSend = "Simple test release-fast"
+    runHandler(s"def handler = \"$toSend\"", scalaCliExtraArgs = Seq("--native-mode", "release-fast"))
     assertEquals(requests.get(url).text(), toSend)
   }
   test("should run with --no-runtime") {
@@ -48,7 +57,8 @@ class SimpleTest extends FunSuite {
         file,
         static = None,
         port,
-        `no-runtime` = false
+        `no-runtime` = false,
+        scalaCliExtraArgs = Seq.empty
       )
     )
     assertEquals(requests.get(url).text(), toSend)
@@ -66,7 +76,8 @@ class SimpleTest extends FunSuite {
         file,
         static = Some(staticDir),
         port,
-        `no-runtime` = false
+        `no-runtime` = false,
+        scalaCliExtraArgs = Seq.empty
       )
     )
     assertEquals(requests.get(s"$url/foo").text(), "bar")
@@ -106,7 +117,8 @@ class SimpleTest extends FunSuite {
         workdir,
         Some(staticDir),
         port,
-        `no-runtime` = false
+        `no-runtime` = false,
+        scalaCliExtraArgs = Seq.empty
       ),
       imageName
     )
