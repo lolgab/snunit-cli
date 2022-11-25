@@ -10,7 +10,11 @@ val main = """import snunit._
   |  .listen()
   |""".stripMargin
 
-def makeConfig(executable: os.Path, publicDirOpt: Option[os.Path], port: Int) = {
+def makeConfig(
+    executable: os.Path,
+    publicDirOpt: Option[os.Path],
+    port: Int
+) = {
   def passToApp = ujson.Obj("pass" -> "applications/app")
   ujson.Obj(
     "listeners" -> ujson.Obj(
@@ -114,7 +118,11 @@ case class Config(
 
 def run(config: Config): Unit = {
   cleanCache()
-  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq(config.scalaCliExtraArgs))
+  val outputPath = buildBinary(
+    config.path,
+    config.`no-runtime`,
+    scalaCliArgs = Seq(config.scalaCliExtraArgs)
+  )
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   unitd.run(unitConfig)
 }
@@ -127,20 +135,28 @@ def runJvm(config: Config): Unit = {
   os.remove(outputPath)
   os.remove.all(targetDir / ".scala-build" / "project" / "native")
   val proc = os.proc("scala-cli", "run", scalaNativeVersionArgs, targetDir)
-  proc.call(stdout = os.Inherit, env = Map("SNUNIT_PORT" -> config.port.toString))
+  proc.call(
+    stdout = os.Inherit,
+    env = Map("SNUNIT_PORT" -> config.port.toString)
+  )
 }
 
 def runBackground(config: Config): Unit = {
   cleanCache()
-  val outputPath = buildBinary(config.path, config.`no-runtime`, scalaCliArgs = Seq(config.scalaCliExtraArgs))
+  val outputPath = buildBinary(
+    config.path,
+    config.`no-runtime`,
+    scalaCliArgs = Seq(config.scalaCliExtraArgs)
+  )
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   val pid = unitd.runBackground(unitConfig)
   println(s"Unit is running in the background with pid $pid")
 }
 
 def installTools(): Unit = {
-  val isBrewInstalled = os.proc("bash", "-c", "command -v brew").call(check = false).exitCode == 0
-  if(isBrewInstalled) installWithBrew()
+  val isBrewInstalled =
+    os.proc("bash", "-c", "command -v brew").call(check = false).exitCode == 0
+  if (isBrewInstalled) installWithBrew()
   else installWithAptGet()
 }
 
@@ -150,21 +166,23 @@ def buildDocker(
 ): Unit = {
   cleanCache()
   val clangImage = "lolgab/snunit-clang:0.0.3"
-  Using(Container(os.proc(
-      "docker",
-      "run",
-      "-v",
-      s"${os.pwd}:${os.pwd}",
-      "--rm",
-      "-d",
-      "-i",
-      clangImage
+  Using(
+    Container(
+      os.proc(
+        "docker",
+        "run",
+        "-v",
+        s"${os.pwd}:${os.pwd}",
+        "--rm",
+        "-d",
+        "-i",
+        clangImage
+      ).call()
+        .out
+        .text()
+        .trim
     )
-    .call()
-    .out
-    .text()
-    .trim)
-  ){ container =>
+  ) { container =>
     def clangScript(entrypoint: String) = s"""#!/bin/bash
       |docker exec $container $entrypoint "$$@" 
       |""".stripMargin
@@ -179,12 +197,22 @@ def buildDocker(
     val outputPath = buildBinary(
       config.path,
       config.`no-runtime`,
-      Seq("--native-clang", clangPath, "--native-clangpp", clangppPath, config.scalaCliExtraArgs)
+      Seq(
+        "--native-clang",
+        clangPath,
+        "--native-clangpp",
+        clangppPath,
+        config.scalaCliExtraArgs
+      )
     )
     val workdirInContainer = os.root / "workdir"
     val staticDirInContainer = workdirInContainer / "static"
     val executablePathInContainer = workdirInContainer / outputPath.last
-    val unitConfig = makeConfig(executablePathInContainer, config.static.map(_ => staticDirInContainer), config.port)
+    val unitConfig = makeConfig(
+      executablePathInContainer,
+      config.static.map(_ => staticDirInContainer),
+      config.port
+    )
     val stateDir = cacheDir / "state"
     os.makeDir.all(stateDir)
     val staticInCacheDir = config.static.map { static =>

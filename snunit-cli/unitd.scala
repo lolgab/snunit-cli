@@ -20,23 +20,35 @@ object unitd {
     os.makeDir.all(state)
     val control = dest / "control.sock"
     os.remove(control)
-    val proc = os.proc(
-      "unitd",
-      "--no-daemon",
-      "--log",
-      "/dev/stderr",
-      "--state",
-      state,
-      "--control",
-      s"unix:$control",
-      "--pid",
-      pidFile
-    ).spawn()
+    val proc = os
+      .proc(
+        "unitd",
+        "--no-daemon",
+        "--log",
+        "/dev/stderr",
+        "--state",
+        state,
+        "--control",
+        s"unix:$control",
+        "--pid",
+        pidFile
+      )
+      .spawn()
     Thread.sleep(10)
     println("Waiting for unit to start...")
     // This returns after Unit is started
     os.proc("curl", "-s", "--unix-socket", control, "http://localhost").call()
-    os.proc("curl", "-s", "-X", "PUT", "-d", ujson.write(config), "--unix-socket", control, "http://localhost/config").call()
+    os.proc(
+      "curl",
+      "-s",
+      "-X",
+      "PUT",
+      "-d",
+      ujson.write(config),
+      "--unix-socket",
+      control,
+      "http://localhost/config"
+    ).call()
     proc
   }
   def runBackground(config: ujson.Obj): Long = {

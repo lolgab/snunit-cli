@@ -1,9 +1,10 @@
-private def runCommands(commands: String) = os.proc("bash", "-c", commands).call(stdin = os.Inherit, stdout = os.Inherit)
+private def runCommands(commands: String) =
+  os.proc("bash", "-c", commands).call(stdin = os.Inherit, stdout = os.Inherit)
 
 private def installGeneric(
-  installClangCommands: String,
-  installUnitCommands: String,
-  installScalaCliCommands: String,
+    installClangCommands: String,
+    installUnitCommands: String,
+    installScalaCliCommands: String
 ): Unit = {
   println("Installing required tools for SNUnit...")
   println("Installing Clang\n")

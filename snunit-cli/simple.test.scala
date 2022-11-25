@@ -27,7 +27,10 @@ class SimpleTest extends FunSuite {
   }
   test("should run with scala-cli release-mode") {
     val toSend = "Simple test release-fast"
-    runHandler(s"def handler = \"$toSend\"", scalaCliExtraArgs = Seq("--native-mode", "release-fast"))
+    runHandler(
+      s"def handler = \"$toSend\"",
+      scalaCliExtraArgs = Seq("--native-mode", "release-fast")
+    )
     assertEquals(requests.get(url).text(), toSend)
   }
   test("should run with --no-runtime") {
