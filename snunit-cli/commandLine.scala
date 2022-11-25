@@ -41,6 +41,7 @@ val extraScalaCliArgs = Opts
     "extra arguments to pass to scala-cli",
     metavar = "'--opt1-key opt1-value --opt2-key opt2-value'"
   )
+  .withDefault(os.Shellable(Seq.empty))
 
 val configOpts: Opts[Config] =
   (pathOpt, staticOpt, portOpt, noRuntimeFlag, extraScalaCliArgs).mapN(
