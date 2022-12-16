@@ -226,7 +226,7 @@ def buildDocker(
     os.write(configFile, unitConfig)
     val stateDirPathInContainer = workdirInContainer / "state"
 
-    val dockerfile = s"""FROM nginx/unit:1.28.0-minimal
+    val dockerfile = s"""FROM nginx/unit:1.29.0-minimal
       |COPY ${outputPath.last} $executablePathInContainer
       |COPY ${stateDir.last} $stateDirPathInContainer
       |${config.static.fold("")(static => s"COPY static $staticDirInContainer")}

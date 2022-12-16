@@ -37,7 +37,7 @@ class SimpleTest extends FunSuite {
     val toSend = "Simple test"
     val main = s"""
       |//> using scala "3.2.1"
-      |import $$dep.`com.github.lolgab::snunit::0.1.1`
+      |import $$dep.`com.github.lolgab::snunit::0.2.4`
       |import snunit._
       |
       |@main
