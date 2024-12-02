@@ -1,5 +1,5 @@
-//> using lib "org.scalameta::munit:0.7.29"
-//> using lib "com.lihaoyi::requests:0.7.0"
+//> using dep "org.scalameta::munit:0.7.29"
+//> using dep "com.lihaoyi::requests:0.8.0"
 
 import munit._
 import scala.util._
@@ -36,13 +36,13 @@ class SimpleTest extends FunSuite {
   test("should run with --no-runtime") {
     val toSend = "Simple test"
     val main = s"""
-      |//> using scala "3.2.1"
-      |import $$dep.`com.github.lolgab::snunit::0.2.4`
+      |//> using scala "3.2.2"
+      |import $$dep.`com.github.lolgab::snunit::0.5.3`
       |import snunit._
       |
       |@main
       |def main =
-      |  SyncServerBuilder.build(_.send(StatusCode.OK, "$toSend", Seq()))
+      |  SyncServerBuilder.build(_.send(StatusCode.OK, "$toSend", Headers.empty))
       |  .listen()
       |""".stripMargin
     runHandler(main, noRuntime = true)
@@ -99,7 +99,7 @@ class SimpleTest extends FunSuite {
     assertEquals(leftResponse.text(), "Error")
     assertEquals(leftResponse.statusCode, 500)
   }
-  test("Handler with int parameter") {
+  test("RequestHandler with int parameter") {
     runHandler("def handler(i: Int): Int = i + 1")
     assertEquals(requests.post(url, data = "10").text(), "11")
   }

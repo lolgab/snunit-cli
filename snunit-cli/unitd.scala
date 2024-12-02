@@ -27,7 +27,7 @@ object unitd {
         "--no-daemon",
         "--log",
         "/dev/stderr",
-        "--state",
+        "--statedir",
         state,
         "--control",
         s"unix:$control",

@@ -1,8 +1,9 @@
-//> using scala "3.2.1"
+//> using scala "3.5.2"
 
-//> using lib "com.github.lolgab::snunit::0.2.4"
+//> using platform "scala-native"
+//> using dep "com.github.lolgab::snunit::0.10.2"
 
-import snunit._
+import snunit.*
 
 import scala.compiletime.erasedValue
 import scala.util.control.NonFatal
@@ -14,10 +15,10 @@ private inline def handlerImpl(
     contentType: String
 ): Unit =
   try {
-    req.send(code, res, Seq("Content-type" -> "text/plain"))
+    req.send(code, res, Headers("Content-type" -> "text/plain"))
   } catch {
     case NonFatal(e) =>
-      req.send(StatusCode.InternalServerError, s"Got error $e", Seq.empty)
+      req.send(StatusCode.InternalServerError, s"Got error $e", Headers.empty)
   }
 
 private inline def textPlainResponse(
@@ -50,11 +51,11 @@ private transparent inline def readContent[T](content: String) = {
   result.asInstanceOf[T]
 }
 
-private transparent inline def wrapHandler[T](handler: T): Handler =
+private transparent inline def wrapHandler[T](handler: T): RequestHandler =
   inline handler match {
     case f: (t => u) =>
       req =>
-        val contentT = readContent[t](req.content)
+        val contentT = readContent[t](req.content())
         val resT = f(contentT)
         toWritable(req, StatusCode.OK, resT)
     case s: T =>

@@ -6,8 +6,9 @@ val main = """import snunit._
   |
   |@main
   |def main =
-  |  SyncServerBuilder.build(wrapHandler(handler))
-  |  .listen()
+  |  SyncServerBuilder.setRequestHandler(wrapHandler(handler))
+  |   .build()
+  |   .listen()
   |""".stripMargin
 
 def makeConfig(
@@ -38,10 +39,6 @@ def makeConfig(
 }
 
 private val cacheDir = os.pwd / ".snunit"
-
-private val snunitConfigFile = os.rel / "snunit-cli-config.scala"
-
-private val scalaNativeVersionArgs = Seq("--native-version", "0.4.9")
 
 private def cleanCache() = os.remove.all(cacheDir)
 
@@ -83,10 +80,6 @@ private def buildBinary(
     scalaCliArgs: Seq[os.Shellable]
 ) = {
   val targetDir = prepareSources(path, noRuntime)
-  os.write(
-    targetDir / snunitConfigFile,
-    "//> using platform \"scala-native\""
-  )
   val outputPath = cacheDir / s"${path.last}.out"
   os.remove(outputPath)
   os.remove.all(targetDir / ".scala-build" / "project" / "native")
@@ -94,7 +87,6 @@ private def buildBinary(
     os.proc(
       "scala-cli",
       "package",
-      scalaNativeVersionArgs,
       targetDir,
       "-o",
       outputPath,
@@ -125,20 +117,6 @@ def run(config: Config): Unit = {
   )
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   unitd.run(unitConfig)
-}
-
-def runJvm(config: Config): Unit = {
-  cleanCache()
-  val targetDir = prepareSources(config.path, config.`no-runtime`)
-  os.remove(targetDir / snunitConfigFile)
-  val outputPath = cacheDir / s"${config.path.last}.out"
-  os.remove(outputPath)
-  os.remove.all(targetDir / ".scala-build" / "project" / "native")
-  val proc = os.proc("scala-cli", "run", scalaNativeVersionArgs, targetDir)
-  proc.call(
-    stdout = os.Inherit,
-    env = Map("SNUNIT_PORT" -> config.port.toString)
-  )
 }
 
 def runBackground(config: Config): Unit = {
@@ -226,14 +204,14 @@ def buildDocker(
     os.write(configFile, unitConfig)
     val stateDirPathInContainer = workdirInContainer / "state"
 
-    val dockerfile = s"""FROM nginx/unit:1.29.0-minimal
+    val dockerfile = s"""FROM nginx/unit:1.33.0-minimal
       |COPY ${outputPath.last} $executablePathInContainer
       |COPY ${stateDir.last} $stateDirPathInContainer
       |${config.static.fold("")(static => s"COPY static $staticDirInContainer")}
       |
       |EXPOSE ${config.port}
       |
-      |ENTRYPOINT ["unitd", "--no-daemon", "--log", "/dev/stdout", "--state", "$stateDirPathInContainer"]
+      |ENTRYPOINT ["unitd", "--no-daemon", "--log", "/dev/stdout", "--statedir", "$stateDirPathInContainer"]
       |""".stripMargin
 
     val dockerfilePath = cacheDir / "Dockerfile"

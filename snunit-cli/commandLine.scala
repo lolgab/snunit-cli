@@ -55,13 +55,6 @@ val runCommand = Opts
   )(configOpts)
   .map(config => run(config))
 
-val runJvmCommand = Opts
-  .subcommand(
-    name = "run-jvm",
-    help = "Run your app on the JVM"
-  )(configOpts)
-  .map(config => runJvm(config))
-
 val runBackgroundCommand = Opts
   .subcommand(
     name = "run-background",
@@ -93,7 +86,6 @@ val mainCommand =
   Command("snunit", "run your Scala Native code as a HTTP server with ease")(
     runCommand
       .orElse(runBackgroundCommand)
-      .orElse(runJvmCommand)
       .orElse(installToolsCommand)
       .orElse(buildDockerCommand)
   )

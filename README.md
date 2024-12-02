@@ -40,32 +40,13 @@ Compiled project (Scala 3.1.1, Scala Native)
   ./.snunit/example.out
 Waiting for unit to start...
 2022/01/29 19:37:49 [warn] 55045#10895105 Unit is running unprivileged, then it cannot use arbitrary user and group.
-2022/01/29 19:37:49 [info] 55045#10895105 unit 1.29.0 started
+2022/01/29 19:37:49 [info] 55045#10895105 unit 1.33.0 started
 ```
 
 Then you can check the server is running with curl:
 ```bash
 curl -X POST -d 'Lorenzo' http://localhost:8081
 Hello Lorenzo!!!⏎ 
-```
-
-## Running on JVM
-
-snunit-cli allows running on Jvm too to have a faster development cycle.
-The Jvm implementation is a thin layer on top of the [Undertow](https://undertow.io/) Java server.
-
-You can run on Jvm using the `runJvm` command:
-
-```bash
-$ snunit run-jvm --port 9001 func.scala
-feb 10, 2022 11:33:57 AM io.undertow.Undertow start
-INFO: starting server: Undertow - 2.2.14.Final
-feb 10, 2022 11:33:57 AM org.xnio.Xnio <clinit>
-INFO: XNIO version 3.8.4.Final
-feb 10, 2022 11:33:57 AM org.xnio.nio.NioXnio <clinit>
-INFO: XNIO NIO Implementation Version 3.8.4.Final
-feb 10, 2022 11:33:57 AM org.jboss.threads.Version <clinit>
-INFO: JBoss Threads version 3.1.0.Final
 ```
 
 ## Creating a Docker image
@@ -97,7 +78,7 @@ create your SNUnit HTTP server manually.
 For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
 
 ```scala
-//> using lib "com.github.lolgab::snunit-cask::0.2.4"
+//> using lib "com.github.lolgab::snunit-cask::0.5.3"
 
 object MinimalApplication extends cask.MainRoutes {
   @cask.get("/")
