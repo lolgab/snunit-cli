@@ -29,12 +29,6 @@ val staticOpt = Opts
 val portOpt = Opts
   .option[Int]("port", "port where to run your application")
   .withDefault(9000)
-val noRuntimeFlag = Opts
-  .flag(
-    "no-runtime",
-    "disable the function runtime and provide your own SNUnit server"
-  )
-  .orFalse
 val extraScalaCliArgs = Opts
   .option[os.Shellable](
     "scala-cli-args",

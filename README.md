@@ -10,12 +10,17 @@ Then you need to install the needed tooling with `./snunit install-tools`
 
 ## First example
 
-You can create a directory with a scala file containing a function named `handler`
+You can create a directory with a scala file containing a SNUnit server
 
 For example: `example/main.scala`
 
 ```scala
-def handler(name: String): String = s"Hello $name!"
+import snunit.*
+@main def run =
+  SyncServerBuilder
+    .setRequestHandler(_.send(StatusCode.OK, "Hello world!", Headers.empty))
+    .build()
+    .listen()
 ```
 
 After that you can run your function with:
@@ -45,8 +50,8 @@ Waiting for unit to start...
 
 Then you can check the server is running with curl:
 ```bash
-curl -X POST -d 'Lorenzo' http://localhost:8081
-Hello Lorenzo!!!⏎ 
+curl http://localhost:8081
+Hello world!⏎ 
 ```
 
 ## Creating a Docker image
@@ -70,15 +75,12 @@ curl -X POST -d 'John Doe' http://localhost:8081
 Hello John Doe!!!⏎ 
 ```
 
-## Writing your own HTTP Server with `--no-runtime`
-
-With the `--no-runtime` flag `snunit-cli` will disable its runtime. So you will need to
-create your SNUnit HTTP server manually.
+## Example using Cask
 
 For example using the [Cask](https://github.com/com-lihaoyi/cask) module: `example/main.scala`
 
 ```scala
-//> using lib "com.github.lolgab::snunit-cask::0.5.3"
+//> using lib "com.github.lolgab::snunit-cask::0.10.3"
 
 object MinimalApplication extends cask.MainRoutes {
   @cask.get("/")
@@ -93,7 +95,7 @@ object MinimalApplication extends cask.MainRoutes {
 After that you can run your server with:
 
 ```bash
-./snunit run --port 8081 --no-runtime example
+./snunit run --port 8081 example
 ```
 
 ## Passing custom options to scala-cli
