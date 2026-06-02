@@ -43,9 +43,9 @@ Compiled project (Scala 3.1.1, Scala Native)
 [info] Linking native code (immix gc, none lto) (122 ms)
 [info] Total (6881 ms)
   ./.snunit/example.out
-Waiting for unit to start...
+Waiting for FreeUnit to start...
 2022/01/29 19:37:49 [warn] 55045#10895105 Unit is running unprivileged, then it cannot use arbitrary user and group.
-2022/01/29 19:37:49 [info] 55045#10895105 unit 1.33.0 started
+2022/01/29 19:37:49 [info] 55045#10895105 freeunit 1.35.3 started
 ```
 
 Then you can check the server is running with curl:

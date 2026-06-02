@@ -4,6 +4,8 @@ import scala.util.control.NonFatal
 object unitd {
   private val dest = os.home / ".cache" / "snunit"
   private val pidFile = dest / "unit.pid"
+  private val startupMaxAttempts = 100
+  private val startupSleepMs = 50L
   private def closeUnitd(): Unit = {
     try {
       val pid = os.read(pidFile).trim()
@@ -35,11 +37,19 @@ object unitd {
         pidFile
       )
       .spawn()
-    Thread.sleep(100)
-    println("Waiting for unit to start...")
-    // This returns after Unit is started
-    os.proc("unitc", "GET", "/config")
-      .call(stdin = os.Inherit, env = Map("UNIT_CTRL" -> control.toString))
+    println("Waiting for FreeUnit to start...")
+    var attempts = 0
+    while (attempts < startupMaxAttempts && !os.exists(control)) {
+      if (!proc.wrapped.isAlive()) {
+        throw new RuntimeException("FreeUnit exited before control socket was created.")
+      }
+      Thread.sleep(startupSleepMs)
+      attempts += 1
+    }
+    if (!os.exists(control)) {
+      proc.destroy()
+      throw new RuntimeException("Timed out waiting for FreeUnit control socket.")
+    }
     proc
   }
   def runBackground(config: ujson.Obj): Long = {

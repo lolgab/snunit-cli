@@ -128,7 +128,7 @@ def runBackground(config: Config): Unit = {
   )
   val unitConfig = makeConfig(outputPath, config.static, config.port)
   val pid = unitd.runBackground(unitConfig)
-  println(s"Unit is running in the background with pid $pid")
+  println(s"FreeUnit is running in the background with pid $pid")
 }
 
 def installTools(): Unit = {
@@ -204,7 +204,7 @@ def buildDocker(
     os.write(configFile, unitConfig)
     val stateDirPathInContainer = workdirInContainer / "state"
 
-    val dockerfile = s"""FROM nginx/unit:1.33.0-minimal
+    val dockerfile = s"""FROM ghcr.io/freeunitorg/freeunit:latest-minimal
       |COPY ${outputPath.last} $executablePathInContainer
       |COPY ${stateDir.last} $stateDirPathInContainer
       |${config.static.fold("")(static => s"COPY static $staticDirInContainer")}

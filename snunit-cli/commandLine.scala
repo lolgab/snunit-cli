@@ -29,6 +29,12 @@ val staticOpt = Opts
 val portOpt = Opts
   .option[Int]("port", "port where to run your application")
   .withDefault(9000)
+val noRuntimeFlag = Opts
+  .flag(
+    "no-runtime",
+    "Do not generate SNUnit runtime wrappers in the build directory"
+  )
+  .orFalse
 val extraScalaCliArgs = Opts
   .option[os.Shellable](
     "scala-cli-args",
@@ -45,14 +51,14 @@ val configOpts: Opts[Config] =
 val runCommand = Opts
   .subcommand(
     name = "run",
-    help = "Run your app on local NGINX Unit"
+    help = "Run your app on local FreeUnit"
   )(configOpts)
   .map(config => run(config))
 
 val runBackgroundCommand = Opts
   .subcommand(
     name = "run-background",
-    help = "Run your app in background on a local NGINX Unit"
+    help = "Run your app in background on a local FreeUnit"
   )(configOpts)
   .map(config => runBackground(config))
 

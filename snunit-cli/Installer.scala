@@ -8,8 +8,9 @@ private def installGeneric(
 ): Unit = {
   println("Installing required tools for SNUnit...")
   println("Installing Clang\n")
-  runCommands(installUnitCommands)
-  println("""Installing NGINX Unit https://unit.nginx.org/installation
+  runCommands(installClangCommands)
+  println("""Installing FreeUnit-compatible Unit runtime
+    |https://github.com/freeunitorg/freeunit
     |""".stripMargin)
   runCommands(installUnitCommands)
   println("""Installing scala-cli https://scala-cli.virtuslab.org/install
